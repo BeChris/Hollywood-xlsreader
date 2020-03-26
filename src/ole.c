@@ -53,8 +53,8 @@ static const DWORD ENDOFCHAIN	= 0xFFFFFFFE;	// -2
 static const DWORD FREESECT		= 0xFFFFFFFF;	// -1
 
 static size_t sector_pos(OLE2* ole2, DWORD sid);
-static ssize_t sector_read(OLE2* ole2, void *buffer, size_t buffer_len, DWORD sid);
-static ssize_t read_MSAT(OLE2* ole2, OLE2Header *oleh);
+static int64_t sector_read(OLE2* ole2, void *buffer, size_t buffer_len, DWORD sid);
+static int64_t read_MSAT(OLE2* ole2, OLE2Header *oleh);
 static void *ole_malloc(size_t len);
 static void *ole_realloc(void *ptr, size_t len);
 
@@ -156,7 +156,7 @@ static int ole2_bufread(OLE2Stream* olest)
 }
 
 // Read part of stream
-ssize_t ole2_read(void* buf, size_t size, size_t count, OLE2Stream* olest)
+int64_t ole2_read(void* buf, size_t size, size_t count, OLE2Stream* olest)
 {
     size_t didReadCount=0;
     size_t totalReadCount;
@@ -406,8 +406,8 @@ static size_t ole2_fread(OLE2 *ole2, void *buffer, size_t buffer_len, size_t siz
 }
 
 // read header and check magic numbers
-static ssize_t ole2_read_header(OLE2 *ole) {
-    ssize_t bytes_read = 0, total_bytes_read = 0;
+static int64_t ole2_read_header(OLE2 *ole) {
+    int64_t bytes_read = 0, total_bytes_read = 0;
     OLE2Header *oleh = malloc(sizeof(OLE2Header));
     if (ole2_fread(ole, oleh, sizeof(OLE2Header), sizeof(OLE2Header)) != 1) {
         total_bytes_read = -1;
@@ -475,12 +475,12 @@ cleanup:
     return total_bytes_read;
 }
 
-static ssize_t ole2_read_body(OLE2 *ole) {
+static int64_t ole2_read_body(OLE2 *ole) {
 	// reuse this buffer
     PSS *pss = NULL;
     OLE2Stream *olest = NULL;
     char* name = NULL;
-    ssize_t bytes_read = 0, total_bytes_read = 0;
+    int64_t bytes_read = 0, total_bytes_read = 0;
 
     if ((olest = ole2_sopen(ole,ole->dirstart, -1)) == NULL) {
         total_bytes_read = -1;
@@ -662,7 +662,7 @@ static size_t sector_pos(OLE2* ole2, DWORD sid)
     return 512 + sid * ole2->lsector;
 }
 // Read one sector from its sid
-static ssize_t sector_read(OLE2* ole2, void *buffer, size_t buffer_len, DWORD sid)
+static int64_t sector_read(OLE2* ole2, void *buffer, size_t buffer_len, DWORD sid)
 {
 	size_t num;
 	size_t seeked;
@@ -683,9 +683,9 @@ static ssize_t sector_read(OLE2* ole2, void *buffer, size_t buffer_len, DWORD si
 }
 
 // read first 109 sectors of MSAT from header
-static ssize_t read_MSAT_header(OLE2* ole2, OLE2Header* oleh, DWORD sectorCount) {
+static int64_t read_MSAT_header(OLE2* ole2, OLE2Header* oleh, DWORD sectorCount) {
     BYTE *sector = (BYTE*)ole2->SecID;
-    ssize_t bytes_read = 0, total_bytes_read = 0;
+    int64_t bytes_read = 0, total_bytes_read = 0;
     size_t bytes_left = ole2->SecIDCount * sizeof(DWORD);
     DWORD sectorNum;
 
@@ -703,9 +703,9 @@ static ssize_t read_MSAT_header(OLE2* ole2, OLE2Header* oleh, DWORD sectorCount)
 }
 
 // Add additional sectors of the MSAT
-static ssize_t read_MSAT_body(OLE2 *ole2, DWORD sectorOffset, DWORD sectorCount) {
+static int64_t read_MSAT_body(OLE2 *ole2, DWORD sectorOffset, DWORD sectorCount) {
     DWORD sid = ole2->difstart;
-    ssize_t bytes_read = 0, total_bytes_read = 0;
+    int64_t bytes_read = 0, total_bytes_read = 0;
     DWORD sectorNum = sectorOffset;
 
     DWORD *sector = ole_malloc(ole2->lsector);
@@ -764,8 +764,8 @@ cleanup:
 }
 
 // read in short table
-static ssize_t read_MSAT_trailer(OLE2 *ole2) {
-    ssize_t total_bytes_read = 0;
+static int64_t read_MSAT_trailer(OLE2 *ole2) {
+    int64_t total_bytes_read = 0;
     DWORD sector, k;
     BYTE *wptr;
     size_t bytes_left;
@@ -809,17 +809,17 @@ cleanup:
 
 
 // Read MSAT
-static ssize_t read_MSAT(OLE2* ole2, OLE2Header* oleh)
+static int64_t read_MSAT(OLE2* ole2, OLE2Header* oleh)
 {
+    int64_t total_bytes_read = 0;
+    int64_t bytes_read = 0;
+
     // reconstitution of the MSAT
     DWORD count = ole2->cfat;
     if(count == 0 || count > (1 << 24)) {
         if (xls_debug) fprintf(stderr, "Error: MSAT count %u out-of-bounds\n", count);
         return -1;
     }
-
-    ssize_t total_bytes_read = 0;
-    ssize_t bytes_read = 0;
 
     ole2->SecIDCount = count*ole2->lsector/4;
     if ((ole2->SecID = ole_malloc(ole2->SecIDCount * sizeof(DWORD))) == NULL) {

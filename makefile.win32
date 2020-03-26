@@ -2,10 +2,10 @@
 
 PROJECT = xlsreader.hwp
 
-BASE		= build/win64
+BASE		= build/win32
 
 C_COMPILER      = cl
-C_COMPILER_OPTS = /nologo /W3 /O2 /EHsc /DHW_WIN32 /DHW_LITTLE_ENDIAN /DNDEBUG /D_MBCS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE /MT /c /I../../include
+C_COMPILER_OPTS = /nologo /W3 /O2 /EHsc /DHW_WIN32 /DHW_LITTLE_ENDIAN /DNDEBUG /D_MBCS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE /MT /c /I../../include /Iinclude
 
 LINKER          = link
 LINKER_OPTS     = /dll /nologo
@@ -18,7 +18,7 @@ $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
 
-{src}.c{build/win64}.o:
+{src}.c{build/win32}.o:
 	$(C_COMPILER) $(C_COMPILER_OPTS) $< /Fo$@
 
 $(PROJECT): $(OBJECTS)

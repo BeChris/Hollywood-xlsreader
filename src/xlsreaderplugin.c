@@ -150,13 +150,19 @@ static SAVEDS int hw_OpenXls(lua_State *L)
 
 	xlsWorkBook* pWB;
 	xlsWorkSheet* pWS;
+	xlsCell *cell;
     xls_error_t error = LIBXLS_OK;
+	unsigned int i;
+	unsigned int j;
+	XLS_WORD cellRow;
+	XLS_WORD cellCol;
+	int tabIdx;
 	pWB = xls_open_file(hwcl->DOSBase, file, "UTF-8", &error);
 	if (pWB) {
 
 		lua_newtable(L);
 
-		for (unsigned int i = 0; i < pWB->sheets.count; ++i) {
+		for (i = 0; i < pWB->sheets.count; ++i) {
 
 			lua_pushstring(L, pWB->sheets.sheet[i].name);
 
@@ -166,18 +172,17 @@ static SAVEDS int hw_OpenXls(lua_State *L)
 
 			lua_newtable(L);
 
-			for (unsigned int j = 0; j <= (unsigned int)pWS->rows.lastrow; ++j) {
-				XLS_WORD cellRow = (XLS_WORD)j;
+			for (j = 0; j <= (unsigned int)pWS->rows.lastrow; ++j) {
+				cellRow = (XLS_WORD)j;
 
-				XLS_WORD cellCol;
-				int tabIdx = 0;
+				tabIdx = 0;
 
 				lua_pushnumber(L, j);
 
 				lua_newtable(L);
 
 				for (cellCol = 0; cellCol <= pWS->rows.lastcol; ++cellCol) {
-					xlsCell *cell = xls_cell(pWS, cellRow, cellCol);
+					cell = xls_cell(pWS, cellRow, cellCol);
 
 					if ((!cell) || (cell->isHidden)) {
 						continue;

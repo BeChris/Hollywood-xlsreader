@@ -452,6 +452,9 @@ static xls_error_t xls_makeTable(xlsWorkSheet* pWS)
 }
 
 int xls_isCellTooSmall(xlsWorkBook* pWB, BOF* bof, BYTE* buf) {
+
+    size_t label_len;
+
     if (bof->size < sizeof(COL))
         return 1;
 
@@ -471,7 +474,7 @@ int xls_isCellTooSmall(xlsWorkBook* pWB, BOF* bof, BYTE* buf) {
         if (bof->size < offsetof(LABEL, value) + 2)
             return 1;
 
-        size_t label_len = ((LABEL*)buf)->value[0] + (((LABEL*)buf)->value[1] << 8);
+        label_len = ((LABEL*)buf)->value[0] + (((LABEL*)buf)->value[1] << 8);
         if (pWB->is5ver) {
             return (bof->size < offsetof(LABEL, value) + 2 + label_len);
         }
@@ -756,17 +759,20 @@ static xls_error_t xls_addColinfo(xlsWorkSheet* pWS,COLINFO* colinfo)
 
 static xls_error_t xls_mergedCells(xlsWorkSheet* pWS,BOF* bof,BYTE* buf)
 {
+    int count;
+    DWORD limit;
+    int i,c,r;
+    struct MERGEDCELLS *span;
+
     if (bof->size < sizeof(XLS_WORD))
         return LIBXLS_ERROR_PARSE;
 
-    int count = buf[0] + (buf[1] << 8);
-    DWORD limit = sizeof(XLS_WORD)+count*sizeof(struct MERGEDCELLS);
+    count = buf[0] + (buf[1] << 8);
+    limit = sizeof(XLS_WORD)+count*sizeof(struct MERGEDCELLS);
     if(limit > (DWORD)bof->size) {
         verbose("Merged Cells Count out of range");
         return LIBXLS_ERROR_PARSE;
     }
-    int i,c,r;
-    struct MERGEDCELLS *span;
     verbose("Merged Cells");
     for (i=0;i<count;i++)
     {
@@ -824,11 +830,16 @@ int xls_isRecordTooSmall(xlsWorkBook *pWB, BOF *bof1) {
 
 xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
 {
-    BOF bof1 = { .id = 0, .size = 0 };
-    BOF bof2 = { .id = 0, .size = 0 };
+    BOF bof1;
+    BOF bof2;
     BYTE* buf = NULL;
 	BYTE once = 0;
     xls_error_t retval = LIBXLS_OK;
+
+    bof1.id = 0;
+    bof1.size = 0;
+    bof2.id = 0;
+    bof2.size = 0;
 
     verbose ("xls_parseWorkBook");
     do {

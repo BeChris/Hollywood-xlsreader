@@ -9,5 +9,5 @@ WPSDK="$PROGRAMFILES\Microsoft SDKs\Windows\v7.1"
 export WINEPATH="c:\windows;c:\windows\system32;$WSDK\Common7\IDE;$WSDK\VC\bin"
 export INCLUDE="$WSDK\VC\include;$WPSDK\Include"
 export LIB="$WSDK\VC\lib;$WPSDK\Lib"
-$WINE nmake.exe -f makefile.win64
+$WINE nmake.exe -f makefile.win32 $@
 
