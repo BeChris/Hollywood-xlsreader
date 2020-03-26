@@ -1,0 +1,26 @@
+@INCLUDE "debug.hws"
+
+@REQUIRE "xlsreader.hwp"
+
+@DISPLAY {Hidden = True}
+
+ExitOnError(False)
+;content = xlsreader.OpenXls("adherents.xls")
+content = xlsreader.OpenXls("groupes.xls")
+;content = xlsreader.OpenXls("Activite_JA.xls")
+;content = xlsreader.OpenXls("titi")
+error = GetLastError()
+ExitOnError(True)
+
+MyDebug(GetErrorName(error))
+
+;MyDebug(content["Jeudi 20h-21h30 Johan adultes"])
+MyDebug(content)
+;MyDebug()
+
+table = {5, 6, 7}
+
+;MyDebug(table)
+
+;WaitLeftMouse
+;End

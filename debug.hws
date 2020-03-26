@@ -1,0 +1,67 @@
+Function MyDebug(...)
+
+	Local Function PrettyPrint(item, name, indent)
+
+		DebugPrintNR(RepeatStr(" ", indent))
+
+		If GetType(item) = #TABLE
+			If StrLen(name) <> 0
+				DebugPrintNR(name, " : ")
+			EndIf
+		Else
+			If StrLen(name) = 0
+				DebugPrintNR(item, " ")
+			Else
+				DebugPrintNR(name, " : ", item)
+			EndIf	
+		EndIf
+	
+		Switch GetType(item)
+			Case #NUMBER
+				DebugPrint("")
+			Case #STRING
+				DebugPrint("")
+			Case #TABLE
+				DebugPrint("{")
+
+				If HaveItem(item, 0)
+					; Normal numéric index based array
+					For k,v In IPairs(item)
+						PrettyPrint(v, k, indent + 2)
+					Next
+				Else
+					; Associative array
+					For k,v In Pairs(item)
+						PrettyPrint(v, k, indent + 2)
+					Next
+				EndIf
+		 
+				DebugPrintNR(RepeatStr(" ", indent) .. "}")
+				
+				If StrLen(name) <> 0
+					DebugPrint(" // ", name)
+				Else
+					DebugPrint("")
+				EndIf
+				
+			Case #FUNCTION
+				DebugPrint(" (function)")
+			Case #USERDATA
+				DebugPrint(" (userdata)")
+			Case #LIGHTUSERDATA
+				DebugPrint(" (lightuserdata)")
+			Case #THREAD
+				DebugPrint(" (thread)")
+			Case #NIL
+				DebugPrint(" (nil)")
+		EndSwitch
+	
+	
+	EndFunction
+
+	For k, v In IPairs(arg)
+		PrettyPrint(v, "param" .. k+1, 0)
+		DebugPrint("")
+	Next
+	
+EndFunction
