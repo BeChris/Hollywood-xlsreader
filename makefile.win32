@@ -18,6 +18,11 @@ $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
 
+all: $(BASE) $(PROJECT)
+
+$(BASE):
+	md $(BASE)
+
 {src}.c{build/win32}.o:
 	$(C_COMPILER) $(C_COMPILER_OPTS) $< /Fo$@
 

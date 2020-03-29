@@ -1,4 +1,8 @@
 #!/bin/sh
+#This script can be run under Linux to launch (using wine) msvc compiler from Windows 7 SDK
+#To install the Windows 7 SDK run following command:
+#WINEPREFIX=$HOME/.local/share/wineprefixes/psdkwin7 winetricks -q psdkwin71
+
 WINE=${WINE:-wine}
 WINEPREFIX=$HOME/.local/share/wineprefixes/psdkwin7
 export WINEPREFIX
