@@ -1,5 +1,7 @@
 xlsreader - Read XLS files from Hollywood
 
+Hollywood is a commercial multimedia-oriented programming language that can be used to create applications and games very easily (https://hollywood-mal.com/)
+
 This plugin exposes one new function to Hollywood scripts : xlsreader.OpenXls()
 
 /* Open an .xls file and:
@@ -22,4 +24,5 @@ This plugin exposes one new function to Hollywood scripts : xlsreader.OpenXls()
 **
 ** 2)If something went wrong raise an error containing message
 */
+
 
