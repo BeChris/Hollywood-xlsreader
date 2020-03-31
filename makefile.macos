@@ -1,0 +1,45 @@
+# Makefile for Mac OS i386
+
+PROJECT = xlsreader.hwp
+
+BASE		= build/macos
+
+C_COMPILER      = gcc -arch i386
+C_COMPILER_OPTS = -c -fPIC -DHW_MACOS -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -I../../include -Iinclude
+
+LINKER		= gcc -arch i386
+LINKER_OPTS	= -dynamiclib -fPIC -exported_symbols_list plugin_macos.def
+LINKER_LIBS	= 
+
+OBJECTS         = \
+$(BASE)/endian.o \
+$(BASE)/ole.o \
+$(BASE)/xls.o \
+$(BASE)/xlsreaderplugin.o \
+$(BASE)/xlstool.o
+
+all: $(BASE) $(PROJECT)
+
+$(BASE)/%.o: src/%.c
+	$(C_COMPILER) -o $@ $(C_COMPILER_OPTS) src/$*.c
+
+$(BASE):
+	mkdir -p $(BASE)
+
+$(PROJECT): $(OBJECTS)
+	$(LINKER) $(LINKER_OPTS) -o $(BASE)/$(PROJECT) $(OBJECTS) $(LINKER_LIBS)
+	strip -x $(BASE)/$(PROJECT)
+	file $(BASE)/$(PROJECT)
+
+clean:
+	rm -f $(BASE)/*.o
+	rm -f $(BASE)/*.hwp
+	
+$(BASE)/endian.o: src/endian.c
+$(BASE)/ole.o: src/ole.c
+$(BASE)/xls.o: src/xls.c
+$(BASE)/plugin.o: src/xlsreaderplugin.c
+$(BASE)/xlstool.o: src/xlstool.c
+
+
+
