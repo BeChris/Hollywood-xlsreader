@@ -23,6 +23,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <exec/exec.h>
@@ -124,7 +125,7 @@ int initamigastuff(void)
 	if(!(SysBase->AttnFlags & AFF_68881) && !(SysBase->AttnFlags & AFF_FPU40)) return 0;
 	
 	// initialize FPU	
-	Supervisor(_fpu_init);		
+	Supervisor(_fpu_init);
 #else		
 	// obviously only need these in case we're on 680x0 and don't have an FPU
 	MathIeeeSingBasBase = OpenLibrary("mathieeesingbas.library", 0);
