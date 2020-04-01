@@ -23,7 +23,6 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <hollywood/plugin.h>
@@ -34,7 +33,7 @@
 #include "xls.h"
 
 // pointer to the Hollywood plugin API
-static hwPluginAPI *hwcl = NULL;
+hwPluginAPI *hwcl = NULL;
 
 static hwPluginBase *hwpb = NULL;
 

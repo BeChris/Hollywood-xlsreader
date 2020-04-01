@@ -34,9 +34,8 @@
  */
 
 #include <math.h>
-#include <sys/types.h>
-#include <wchar.h>
-#include <stdio.h>
+/*#include <sys/types.h>*/
+/*#include <wchar.h>*/
 
 #ifdef HW_LINUX
 #include <iconv.h>
@@ -52,7 +51,7 @@ static const char *from_enc = "UTF-16LE";
 
 #include <stdlib.h>
 #include <errno.h>
-#include <memory.h>
+/*#include <memory.h>*/
 #include <string.h>
 
 //#include "xls.h"
@@ -145,8 +144,6 @@ static const DWORD colors[] =
 // Display string if in debug mode
 void verbose(char* str)
 {
-    if (xls_debug)
-        printf("libxls : %s\n",str);
 }
 
 char *utf8_decode(const char *str, DWORD len, char *encoding)
@@ -268,6 +265,7 @@ static char* unicode_decode_iconv(const char *s, size_t len, size_t *newlen, con
 
 #else
 
+#ifndef HW_AMIGA
 static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) {
 	// Do wcstombs conversion
     char *converted = NULL;
@@ -275,7 +273,6 @@ static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) 
     size_t i;
     wchar_t *w;
     if (setlocale(LC_CTYPE, "") == NULL) {
-        printf("setlocale failed: %d\n", errno);
         return NULL;
     }
 
@@ -299,7 +296,6 @@ static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) 
     count2 = wcstombs(converted, w, count);
     free(w);
     if (count2 <= 0) {
-        printf("wcstombs failed (%lu)\n", (unsigned long)len/2);
         if (newlen) *newlen = 0;
         return converted;
     }
@@ -307,14 +303,19 @@ static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) 
     return converted;
 }
 #endif
+#endif
 
 // Convert unicode string to to_enc encoding
 char* unicode_decode(const char *s, size_t len, size_t *newlen, const char* to_enc)
 {
-#ifdef HW_LINUX
-    return unicode_decode_iconv(s, len, newlen, to_enc);
+#ifdef HW_AMIGA
+    return s;
 #else
+#  ifdef HW_LINUX
+    return unicode_decode_iconv(s, len, newlen, to_enc);
+#  else
     return unicode_decode_wcstombs(s, len, newlen);
+#  endif
 #endif
 }
 
@@ -373,21 +374,6 @@ char *get_string(const char *s, size_t len, BYTE is2, BYTE is5ver, char *charset
 		ret = utf8_decode(str+ofs, ln, charset);
     }
 
-#if 0	// debugging
-	if(xls_debug == 100) {
-		ofs += (flag & 0x1) ? ln*2 : ln;
-
-		printf("ofs=%d ret[0]=%d\n", ofs, *ret);
-		{
-			unsigned char *ptr;
-			
-			ptr = ret;
-			
-			printf("%x %x %x %x %x %x %x %x\n", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
-			printf("%s\n", ret);
-		}
-	}
-#endif
 
     return ret;
 }
@@ -411,170 +397,37 @@ DWORD xls_getColor(const XLS_WORD color,XLS_WORD def)
 
 void xls_showBookInfo(xlsWorkBook* pWB)
 {
-    verbose("BookInfo");
-    printf("  is5ver: %i\n",pWB->is5ver);
-    printf("codepage: %i\n",pWB->codepage);
-    printf("    type: %.4X ",pWB->type);
-    switch (pWB->type)
-    {
-    case 0x5:
-        printf("Workbook globals\n");
-        break;
-    case 0x6:
-        printf("Visual Basic module\n");
-        break;
-    case 0x10:
-        printf("Worksheet\n");
-        break;
-    case 0x20:
-        printf("Chart\n");
-        break;
-    case 0x40:
-        printf("BIFF4 Macro sheet\n");
-        break;
-    case 0x100:
-        printf("BIFF4W Workbook globals\n");
-        break;
-    }
-    printf("------------------- END BOOK INFO---------------------------\n");
 }
 
 
 void xls_showBOF(BOF* bof)
 {
-    printf("----------------------------------------------\n");
-    verbose("BOF");
-    printf("   ID: %.4Xh %s (%s)\n",bof->id,brdb[get_brbdnum(bof->id)].name,brdb[get_brbdnum(bof->id)].desc);
-    printf("   Size: %i\n",bof->size);
 }
 
-#if 0
-static void xls_showBOUNDSHEET(BOUNDSHEET* bsheet)
-{
-    switch (bsheet->type & 0x000f)
-    {
-    case 0x0000:
-        /* worksheet or dialog sheet */
-        verbose ("85: Worksheet or dialog sheet");
-        break;
-    case 0x0001:
-        /* Microsoft Excel 4.0 macro sheet */
-        verbose ("85: Microsoft Excel 4.0 macro sheet");
-        break;
-    case 0x0002:
-        /* Chart */
-        verbose ("85: Chart sheet");
-        break;
-    case 0x0006:
-        /* Visual Basic module */
-        verbose ("85: Visual Basic sheet");
-        break;
-    default:
-        break;
-    }
-    printf("    Pos: %Xh\n",bsheet->filepos);
-    printf("  flags: %.4Xh\n",bsheet->type);
-    //	printf("   Name: [%i] %s\n",bsheet->len,bsheet->name);
-}
-#endif
 
 void xls_showROW(struct st_row_data* row)
 {
-    verbose("ROW");
-    printf("    Index: %i \n",row->index);
-    printf("First col: %i \n",row->fcell);
-    printf(" Last col: %i \n",row->lcell);
-    printf("   Height: %i (1/20 px)\n",row->height);
-    printf("    Flags: %.4X \n",row->flags);
-    printf("       xf: %i \n",row->xf);
-    printf("----------------------------------------------\n");
 }
 
 void xls_showColinfo(struct st_colinfo_data* col)
 {
-    verbose("COLINFO");
-    printf("First col: %i \n",col->first);
-    printf(" Last col: %i \n",col->last);
-    printf("    Width: %i (1/256 px)\n",col->width);
-    printf("       XF: %i \n",col->xf);
-    printf("    Flags: %i (",col->flags);
-    if (col->flags & 0x1)
-        printf("hidden ");
-    if (col->flags & 0x700)
-        printf("outline ");
-    if (col->flags & 0x1000)
-        printf("collapsed ");
-    printf(")\n");
-    printf("----------------------------------------------\n");
 }
 
 void xls_showCell(struct st_cell_data* cell)
 {
-    printf("  -----------\n");
-    printf("     ID: %.4Xh %s (%s)\n",cell->id, brdb[get_brbdnum(cell->id)].name, brdb[get_brbdnum(cell->id)].desc);
-    printf("   Cell: %c:%u  [%u:%u]\n",cell->col+'A',cell->row+1,cell->col,cell->row);
-//    printf("   Cell: %u:%u\n",cell->col+1,cell->row+1);
-    printf("     xf: %i\n",cell->xf);
-	if(cell->id == XLS_RECORD_BLANK) {
-		//printf("BLANK_CELL!\n");
-		return;
-	}
-    printf(" double: %f\n",cell->d);
-    printf("    int: %d\n",cell->l);
-    if (cell->str!=NULL)
-        printf("    str: %s\n",cell->str);
 }
 
 
 void xls_showFont(struct st_font_data* font)
 {
-
-    printf("      name: %s\n",font->name);
-    printf("    height: %i\n",font->height);
-    printf("      flag: %.4X\n",font->flag);
-    printf("     color: %.6X\n",font->color);
-    printf("      bold: %i\n",font->bold);
-    printf("escapement: %i\n",font->escapement);
-    printf(" underline: %i\n",font->underline);
-    printf("    family: %i\n",font->family);
-    printf("   charset: %i\n",font->charset);
-
 }
-#if 0
-typedef struct st_format
-	{
-		long count;		//Count of FORMAT's
-		struct st_format_data
-		{
-			XLS_WORD index;
-			char *value;
-		}
-		* format;
-	}
-	st_format;
-#endif
 
 void xls_showFormat(struct st_format_data* frmt)
 {
-	printf("    index : %u\n", frmt->index);
-    printf("     value: %s\n", frmt->value);
 }
 
 void xls_showXF(XF8* xf)
 {
-	static int idx;
-	
-    printf("      Index: %u\n",idx++);
-    printf("       Font: %u\n",xf->font);
-    printf("     Format: %u\n",xf->format);
-    printf("       Type: 0x%x\n",xf->type);
-    printf("      Align: 0x%x\n",xf->align);
-    printf("   Rotation: 0x%x\n",xf->rotation);
-    printf("      Ident: 0x%x\n",xf->ident);
-    printf("   UsedAttr: 0x%x\n",xf->usedattr);
-    printf("  LineStyle: 0x%x\n",xf->linestyle);
-    printf("  Linecolor: 0x%x\n",xf->linecolor);
-    printf("GroundColor: 0x%x\n",xf->groundcolor);
 }
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -606,6 +459,19 @@ __inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
     return count;
 }
 
+#endif
+
+#ifdef HW_AMIGA
+int snprintf(char *buffer, size_t size, const char *format, ...)
+{
+    int ret;
+    va_list args;
+
+    va_start(args, format);
+    ret = vsnprintf(buffer, size, format, args);
+    va_end(args);
+    return ret;
+}
 #endif
 
 char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
@@ -642,7 +508,6 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
             ret = malloc(len+1);
             memcpy(ret, label, len);
             ret[len] = 0;
-			//printf("Found BIFF5 string of len=%d \"%s\"\n", len, ret);
 		} else {
             if ((*(label++) & 0x01) == 0) {
                 ret = utf8_decode((char *)label, len, pWB->charset);
@@ -695,6 +560,7 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
     return ret;
 }
 
+/*
 char* xls_getCSS(xlsWorkBook* pWB)
 {
     char color[255];
@@ -835,3 +701,5 @@ char* xls_getCSS(xlsWorkBook* pWB)
 
     return ret;
 }
+*/
+
