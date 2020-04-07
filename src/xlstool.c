@@ -37,22 +37,15 @@
 /*#include <sys/types.h>*/
 /*#include <wchar.h>*/
 
-#ifdef HW_LINUX
-#include <iconv.h>
-
-#define ICONV_CONST
-
-static const char *from_enc = "UTF-16LE";
-
-#else
 #include <locale.h>
 #include <limits.h>
-#endif
 
 #include <stdlib.h>
 #include <errno.h>
 /*#include <memory.h>*/
 #include <string.h>
+
+#include <hollywood/plugin.h>
 
 //#include "xls.h"
 #include "../include/libxls/xlstypes.h"
@@ -61,7 +54,10 @@ static const char *from_enc = "UTF-16LE";
 #include "../include/libxls/brdb.h"
 #include "../include/libxls/endian.h"
 
+#include "../include/xlsreaderplugin.h"
+
 extern int xls_debug;
+extern hwPluginAPI *hwcl;
 
 /* Not a complete list */
 enum xls_format_e {
@@ -183,140 +179,37 @@ char *utf8_decode(const char *str, DWORD len, char *encoding)
 	return ret;
 }
 
-#ifdef HW_LINUX
-static char* unicode_decode_iconv(const char *s, size_t len, size_t *newlen, const char* to_enc) {
-    char* outbuf = 0;
-
-    if(s && len && from_enc && to_enc)
-    {
-        size_t outlenleft = len;
-        int outlen = len;
-        size_t inlenleft = len;
-        iconv_t ic = iconv_open(to_enc, from_enc);
-        const char* src_ptr = s;
-        char* out_ptr = 0;
-
-        if(ic == (iconv_t)-1)
-        {
-            // Something went wrong.
-            if (errno == EINVAL)
-            {
-                if (!strcmp(to_enc, "ASCII"))
-                {
-                    ic = iconv_open("UTF-8", from_enc);
-                    if(ic == (iconv_t)-1)
-                    {
-                        printf("conversion from '%s' to '%s' not available", from_enc, to_enc);
-                        return outbuf;
-                    }
-                }
-            }
-            else
-            {
-                printf ("iconv_open: error=%d", errno);
-                return outbuf;
-            }
-        }
-        size_t st; 
-        outbuf = malloc(outlen + 1);
-
-		if(outbuf)
-        {
-            out_ptr = outbuf;
-            while(inlenleft)
-            {
-                st = iconv(ic, (ICONV_CONST char **)&src_ptr, &inlenleft, (char **)&out_ptr,(size_t *) &outlenleft);
-                if(st == (size_t)(-1))
-                {
-                    if(errno == E2BIG)
-                    {
-                        size_t diff = out_ptr - outbuf;
-                        outlen += inlenleft;
-                        outlenleft += inlenleft;
-                        outbuf = realloc(outbuf, outlen + 1);
-                        if(!outbuf)
-                        {
-                            break;
-                        }
-                        out_ptr = outbuf + diff;
-                    }
-                    else
-                    {
-                        free(outbuf), outbuf = NULL;
-                        break;
-                    }
-                }
-            }
-        }
-        iconv_close(ic);
-        outlen -= outlenleft;
-
-        if (newlen)
-        {
-            *newlen = outbuf ? outlen : 0;
-        }
-        if(outbuf)
-        {
-            outbuf[outlen] = 0;
-        }
-    }
-    return outbuf;
-}
-
-#else
-
-#ifndef HW_AMIGA
-static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) {
-	// Do wcstombs conversion
-    char *converted = NULL;
-    int count, count2;
-    size_t i;
-    wchar_t *w;
-    if (setlocale(LC_CTYPE, "") == NULL) {
-        return NULL;
-    }
-
-    w = malloc((len/2+1)*sizeof(wchar_t));
-
-    for(i=0; i<len/2; i++)
-    {
-        w[i] = (BYTE)s[2*i] + ((BYTE)s[2*i+1] << 8);
-    }
-    w[len/2] = '\0';
-
-    count = wcstombs(NULL, w, INT_MAX);
-
-    if (count <= 0) {
-        if (newlen) *newlen = 0;
-        free(w);
-        return NULL;
-    }
-
-    converted = calloc(count+1, sizeof(char));
-    count2 = wcstombs(converted, w, count);
-    free(w);
-    if (count2 <= 0) {
-        if (newlen) *newlen = 0;
-        return converted;
-    }
-    if (newlen) *newlen = count2;
-    return converted;
-}
-#endif
-#endif
-
 // Convert unicode string to to_enc encoding
 char* unicode_decode(const char *s, size_t len, size_t *newlen, const char* to_enc)
 {
-#ifdef HW_AMIGA
-    return s;
-#else
-#  ifdef HW_LINUX
-    return unicode_decode_iconv(s, len, newlen, to_enc);
-#  else
-    return unicode_decode_wcstombs(s, len, newlen);
-#  endif
-#endif
+	// Do wcstombs conversion
+    char *converted = NULL;
+    int count;
+    int idx;
+    if (setlocale(0, "") == NULL) {
+        return NULL;
+    }
+
+    if (validate(s) == FALSE) {
+        printf("Not validated !\n");
+        return NULL;
+    }
+
+    count = (len * 2) + 1;
+
+    converted = calloc(count * 5, sizeof(char));
+    memset(converted, 0, 5 * sizeof(char));
+
+    idx = 0;
+    while (idx < len) {
+        int ch = getnextchar(s, &idx);
+        char temp[5] = {'\0'};
+        composechar(temp, ch);
+        strcat(converted, temp);
+    }
+
+    if (newlen) *newlen = strlen(converted);
+    return converted;
 }
 
 // Read and decode string

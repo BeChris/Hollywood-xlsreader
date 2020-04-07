@@ -35,7 +35,11 @@
 #include <hollywood/plugin.h>
 
 #if defined(HW_MORPHOS) || defined(HW_AMIGAOS3)
-struct ExecBase *SysBase = NULL;
+//struct ExecBase *SysBase = NULL;
+#endif
+
+#if defined(HW_AMIGA)
+int main(int argc, char **argv) {return 0;}
 #endif
 
 #if defined(HW_AMIGAOS3) && !defined(HW_FPU)
@@ -50,7 +54,7 @@ extern ULONG _fpu_init(VOID);
 // need to define this or LoadSeg() will fail on this plugin
 // NB: libnix also defines __abox__ but if we don't use any
 // libnix object it won't get defined so better declare it here!
-int __abox__ = 1;
+//int __abox__ = 1;
 #endif
 
 #ifdef HW_AMIGAOS4
@@ -111,7 +115,7 @@ const hwAmigaEntry entry = {
 int initamigastuff(void)
 {
 #if !defined(HW_WARPOS) && !defined(HW_AROS)
-	SysBase = *((struct ExecBase **) 4);
+	//SysBase = *((struct ExecBase **) 4);
 #endif
 
 #ifdef HW_AMIGAOS4

@@ -75,14 +75,14 @@ HW_EXPORT int InitPlugin(hwPluginBase *self, hwPluginAPI *cl, STRPTR path)
 	self->Version = PLUGIN_VER;
 	self->Revision = PLUGIN_REV;
 
-	// we want to be compatible with Hollywood 6.0
+	// we want to be compatible with Hollywood 7.0
 	// **WARNING**: when compiling with newer SDK versions you have to be very
 	// careful which functions you call and which structure members you access
 	// because not all of them are present in earlier versions. Thus, if you
 	// target versions older than your SDK version you have to check the hollywood.h
 	// header file very carefully to check whether the older version you want to
 	// target has the respective feature or not
-	self->hwVersion = 6;
+	self->hwVersion = 7;
 	self->hwRevision = 0;
 	
 	// set plugin information; note that these string pointers need to stay

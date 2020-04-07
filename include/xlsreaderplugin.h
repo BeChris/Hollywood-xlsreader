@@ -32,3 +32,7 @@ void freeamigastuff(void);
 #define lua_pushnumber hwcl->LuaBase->lua_pushnumber
 #define lua_pushstring hwcl->LuaBase->lua_pushstring
 #define lua_rawset hwcl->LuaBase->lua_rawset
+#define validate hwcl->UnicodeBase->validate
+#define HW_strlen hwcl->UnicodeBase->strlen
+#define getnextchar hwcl->UnicodeBase->getnextchar
+#define composechar hwcl->UnicodeBase->composechar

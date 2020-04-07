@@ -360,7 +360,6 @@ static xls_error_t xls_addRow(xlsWorkSheet* pWS,ROW* row)
     tmp->flags=row->flags;
     tmp->xf=row->xf&0xfff;
     tmp->xfflags=(row->xf >> 8)&0xf0;
-    if(xls_debug) xls_showROW(tmp);
 
     return LIBXLS_OK;
 }
@@ -451,19 +450,6 @@ void xls_cell_set_str(struct st_cell_data *cell, char *str) {
     }
     cell->str = str;
 }
-
-#ifdef HW_AMIGA
-int sscanf(char *buffer, const char *format, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, format);
-    ret = vsscanf(buffer, format, args);
-    va_end(args);
-    return ret;
-}
-#endif
 
 static struct st_cell_data *xls_addCell(xlsWorkSheet* pWS,BOF* bof,BYTE* buf)
 {
@@ -580,7 +566,6 @@ static struct st_cell_data *xls_addCell(xlsWorkSheet* pWS,BOF* bof,BYTE* buf)
         xls_cell_set_str(cell, xls_getfcell(pWS->workbook,cell, NULL));
         break;
     }
-    if (xls_debug) xls_showCell(cell);
 
 	return cell;
 }
@@ -626,7 +611,6 @@ static xls_error_t xls_addFormat(xlsWorkBook* pWB, FORMAT* format, DWORD size)
     tmp = &pWB->formats.format[pWB->formats.count];
     tmp->index = format->index;
     tmp->value = get_string(format->value, size - offsetof(FORMAT, value), (BYTE)!pWB->is5ver, (BYTE)pWB->is5ver, pWB->charset);
-    if(xls_debug) xls_showFormat(tmp);
     pWB->formats.count++;
 
     return LIBXLS_OK;
@@ -705,7 +689,6 @@ static xls_error_t xls_addColinfo(xlsWorkSheet* pWS,COLINFO* colinfo)
     tmp->xf=colinfo->xf;
     tmp->flags=colinfo->flags;
 
-    if(xls_debug) xls_showColinfo(tmp);
     pWS->colinfo.count++;
 
     return LIBXLS_OK;
@@ -801,7 +784,6 @@ xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
             goto cleanup;
         }
         xlsConvertBof(&bof1);
- 		if(xls_debug) xls_showBOF(&bof1);
 
         if (bof1.size) {
             if ((buf = realloc(buf, bof1.size)) == NULL) {
@@ -889,9 +871,6 @@ xls_error_t xls_parseWorkBook(xlsWorkBook* pWB)
                     goto cleanup;
                 }
 
-				if(xls_debug) {
-					xls_showXF(xf);
-				}
 			}
             break;
 
@@ -1116,8 +1095,6 @@ xls_error_t xls_parseWorkSheet(xlsWorkSheet* pWS)
     }
     do
     {
-		long lastPos = offset;
-
 		if((read = ole2_read(&tmp, 1, 4, pWS->workbook->olestr)) != 4) {
             retval = LIBXLS_ERROR_READ;
             goto cleanup;
@@ -1135,8 +1112,6 @@ xls_error_t xls_parseWorkSheet(xlsWorkSheet* pWS)
         }
 		offset += 4 + tmp.size;
 
-		if(xls_debug)
-			xls_showBOF(&tmp);
 
         switch (tmp.id)
         {
@@ -1170,13 +1145,6 @@ xls_error_t xls_parseWorkSheet(xlsWorkSheet* pWS)
             }
 			break;
 		case XLS_RECORD_DBCELL:
-			if(xls_debug > 10) {
-				DWORD *foo = (DWORD *)buf;
-                XLS_WORD *goo;
-				int i;
-				++foo;
-				goo = (XLS_WORD *)foo;
-			}
 			break;
         case XLS_RECORD_INDEX:
 #if 0
@@ -1210,12 +1178,10 @@ xls_error_t xls_parseWorkSheet(xlsWorkSheet* pWS)
 			if(cell && (cell->id == XLS_RECORD_FORMULA || cell->id == XLS_RECORD_FORMULA_ALT)) {
                 xls_cell_set_str(cell, get_string((char *)buf, tmp.size,
                             (BYTE)!pWB->is5ver, pWB->is5ver, pWB->charset));
-				if (xls_debug) xls_showCell(cell);
 			}
 			break;
 
         default:
-			if(xls_debug)
             break;
         }
     }

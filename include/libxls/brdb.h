@@ -46,6 +46,7 @@ record_brdb brdb[] =
 #include "../libxls/brdb.c.h"
     };
 
+/*
 static int get_brbdnum(int id)
 {
 
@@ -60,3 +61,4 @@ static int get_brbdnum(int id)
     while (brdb[i].opcode!=0xFFF);
     return 0;
 }
+*/

@@ -5,10 +5,10 @@ PROJECT = xlsreader.hwp
 BASE		= build/os3
 
 C_COMPILER      = vc
-C_COMPILER_OPTS = -c -c99 -O -cpu=68020 -DHW_AMIGA -DHW_AMIGAOS3 -I../../include -Iinclude
+C_COMPILER_OPTS = -v -c -c99 -O -cpu=68020 -DHW_AMIGA -DHW_AMIGAOS3 -I../../include -Iinclude
 
 LINKER		= vc
-LINKER_OPTS     = -nostdlib
+LINKER_OPTS     = -v
 LINKER_LIBS	= -lmieee -lvc
 
 OBJECTS         = \
