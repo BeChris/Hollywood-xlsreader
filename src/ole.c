@@ -41,6 +41,7 @@
 #include "../include/libxls/ole.h"
 #include "../include/libxls/xlstool.h"
 #include "../include/libxls/endian.h"
+#include "../include/purefuncs.h"
 
 extern int xls_debug;
 
@@ -61,15 +62,15 @@ static void *ole_malloc(size_t len) {
     if (len > (1<<24) || len == 0) {
         return NULL;
     }
-    return malloc(len);
+    return pure_malloc(len);
 }
 
 static void *ole_realloc(void *ptr, size_t len) {
     if (len > (1<<24) || len == 0) {
-        free(ptr);
+        pure_free(ptr);
         return NULL;
     }
-    return realloc(ptr, len);
+    return pure_realloc(ptr, len);
 }
 
 static int ole2_validate_sector_chain(DWORD *chain, DWORD chain_count, DWORD chain_start) {
@@ -202,7 +203,7 @@ OLE2Stream* ole2_sopen(OLE2* ole,DWORD start, size_t size)
     int success = 1;
 
 
-    olest = calloc(1, sizeof(OLE2Stream));
+    olest = pure_calloc(1, sizeof(OLE2Stream));
     olest->ole=ole;
     olest->size=size;
     olest->fatpos=start;
@@ -360,7 +361,7 @@ static size_t ole2_fread(OLE2 *ole2, void *buffer, size_t buffer_len, size_t siz
 // read header and check magic numbers
 static int64_t ole2_read_header(OLE2 *ole) {
     int64_t bytes_read = 0, total_bytes_read = 0;
-    OLE2Header *oleh = malloc(sizeof(OLE2Header));
+    OLE2Header *oleh = pure_malloc(sizeof(OLE2Header));
     if (ole2_fread(ole, oleh, sizeof(OLE2Header), sizeof(OLE2Header)) != 1) {
         total_bytes_read = -1;
         goto cleanup;
@@ -401,7 +402,7 @@ static int64_t ole2_read_header(OLE2 *ole) {
     total_bytes_read += bytes_read;
 
 cleanup:
-    free(oleh);
+    pure_free(oleh);
 
     return total_bytes_read;
 }
@@ -417,7 +418,7 @@ static int64_t ole2_read_body(OLE2 *ole) {
         total_bytes_read = -1;
         goto cleanup;
     }
-    pss = malloc(sizeof(PSS));
+    pss = pure_malloc(sizeof(PSS));
     do {
         if ((bytes_read = ole2_read(pss,1,sizeof(PSS),olest)) == -1) {
             total_bytes_read = -1;
@@ -433,7 +434,7 @@ static int64_t ole2_read_body(OLE2 *ole) {
         if (pss->type == PS_USER_ROOT || pss->type == PS_USER_STREAM) // (name!=NULL) // 
         {
 
-            ole->files.file = realloc(ole->files.file,(ole->files.count+1)*sizeof(struct st_olefiles_data));
+            ole->files.file = pure_realloc(ole->files.file,(ole->files.count+1)*sizeof(struct st_olefiles_data));
             ole->files.file[ole->files.count].name=name;
             ole->files.file[ole->files.count].start=pss->sstart;
             ole->files.file[ole->files.count].size=pss->size;
@@ -473,7 +474,7 @@ static int64_t ole2_read_body(OLE2 *ole) {
 				}
 			}	
 		} else {
-			free(name);
+			pure_free(name);
 		}
     } while (!olest->eof);
 
@@ -481,7 +482,7 @@ cleanup:
     if (olest)
         ole2_fclose(olest);
     if (pss)
-        free(pss);
+        pure_free(pss);
 
     return total_bytes_read;
 }
@@ -502,7 +503,7 @@ OLE2 *ole2_read_header_and_body(OLE2 *ole) {
 
 // Open in-memory buffer
 OLE2 *ole2_open_buffer(const void *buffer, size_t len) {
-    OLE2 *ole = calloc(1, sizeof(OLE2));
+    OLE2 *ole = pure_calloc(1, sizeof(OLE2));
 
     ole->buffer = buffer;
     ole->buffer_len = len;
@@ -516,13 +517,13 @@ OLE2* ole2_open_file(hwDOSBase *DOSBase, const char *file)
     OLE2* ole = NULL;
 
 
-    ole = calloc(1, sizeof(OLE2));
+    ole = pure_calloc(1, sizeof(OLE2));
 
     ole->DOSBase = DOSBase;
 
 
     if ((ole->handle=DOSBase->hw_FOpen((STRPTR)file, HWFOPENMODE_READ_NEW)) == NULL) {
-        free(ole);
+        pure_free(ole);
         return NULL;
     }
 
@@ -536,19 +537,19 @@ void ole2_close(OLE2* ole2)
         ole2->DOSBase->hw_FClose(ole2->handle);
 
     for(i=0; i<ole2->files.count; ++i) {
-        free(ole2->files.file[i].name);
+        pure_free(ole2->files.file[i].name);
     }
-    free(ole2->files.file);
-    free(ole2->SecID);
-    free(ole2->SSecID);
-    free(ole2->SSAT);
-    free(ole2);
+    pure_free(ole2->files.file);
+    pure_free(ole2->SecID);
+    pure_free(ole2->SSecID);
+    pure_free(ole2->SSAT);
+    pure_free(ole2);
 }
 
 void ole2_fclose(OLE2Stream* ole2st)
 {
-	free(ole2st->buf);
-	free(ole2st);
+	pure_free(ole2st->buf);
+	pure_free(ole2st);
 }
 
 // Return offset in bytes of a sector from its sid
@@ -633,7 +634,7 @@ static int64_t read_MSAT_body(OLE2 *ole2, DWORD sectorOffset, DWORD sectorCount)
     }
 
 cleanup:
-    free(sector);
+    pure_free(sector);
     return total_bytes_read;
 }
 
@@ -713,11 +714,11 @@ static int64_t read_MSAT(OLE2* ole2, OLE2Header* oleh)
 cleanup:
     if (total_bytes_read == -1) {
         if (ole2->SecID) {
-            free(ole2->SecID);
+            pure_free(ole2->SecID);
             ole2->SecID = NULL;
         }
         if (ole2->SSecID) {
-            free(ole2->SSecID);
+            pure_free(ole2->SSecID);
             ole2->SSecID = NULL;
         }
     }

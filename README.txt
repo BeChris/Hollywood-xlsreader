@@ -75,4 +75,26 @@ Cross toolchain to be installed in /opt/m68k-amigaos
 Then to compile:
 ./compile_os3.sh
 
+MorphOS (ppc):
+=============
+Generate a cross compilation toolchain using https://github.com/AmigaPorts/morphos-cross-toolchain
 
+Cross toolchain to be installed in /opt/ppc-morphos
+
+Then to compile:
+./compile_mos.sh
+
+I succeed in installing and running MorphOS under qemu following directives at : http://amigawarez.com/index.php?resources/morphos-on-qemu.297/
+Patched openbios-qemu.elf must be downloaded from http://zero.eik.bme.hu/~balaton/qemu/amiga
+Installation done under /opt/ppc-morphos-emulator
+
+Before installating the system, a 20G harddisk image must be created using command:
+qemu-img create -f raw /opt/ppc-morphos-emulator/mos.raw 20G
+
+To run the emulator on MorphOS 3.11 installation cd:
+
+Then, to install the system from cd:
+qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -prom-env "boot-device=hd:,\boot.img" -bios /opt/ppc-morphos-emulator/openbios-qemu.elf -hda /opt/ppc-morphos-emulator/mos.raw -hdb /opt/ppc-morphos-emulator/data.raw -serial stdio -net none -netdev user,id=network01 -device sungem,netdev=network01 -ctrl-grab -sdl
+
+Then, after system is installed, to boot on emulated harddrive:
+qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -prom-env "boot-device=hd:,\boot.img" -bios /opt/ppc-morphos-emulator/openbios-qemu.elf -hda /opt/ppc-morphos-emulator/mos.raw -hdb /opt/ppc-morphos-emulator/data.raw -serial stdio -net none -netdev user,id=network01 -device sungem,netdev=network01 -ctrl-grab -sdl

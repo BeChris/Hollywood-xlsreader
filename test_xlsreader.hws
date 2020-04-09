@@ -1,0 +1,29 @@
+@INCLUDE "debug.hws"
+
+@REQUIRE "xlsreader", {Link = True}
+
+@DISPLAY {Hidden = True}
+
+; Get commandline arguments (if any)
+;args, count, console = GetCommandLine()
+;args, count = {}, 0
+
+;End()
+
+;DebugPrint("Number of arguments:", count)
+
+; If not arguments, default to open "example.xls" file
+;If ListItems(args) = 0
+	args = {"example.xls"}
+;EndIf
+
+For i, arg In IPairs(args)
+	DebugPrint("Opening " .. arg)
+	ExitOnError(False)
+	content = xlsreader.OpenXls("example.xls")
+	error = GetLastError()
+	ExitOnError(True)
+	MyDebug(GetErrorName(error))
+	MyDebug(content)
+Next
+

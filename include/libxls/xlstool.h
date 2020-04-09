@@ -52,15 +52,3 @@ void xls_showFormat(struct st_format_data* format);
 char* xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label);
 char* xls_getCSS(xlsWorkBook* pWB);
 void xls_showBOF(BOF* bof);
-
-#ifdef HW_AMIGA
-#include <hollywood/plugin.h>
-extern hwPluginAPI *hwcl;
-#define strdup hwcl->CRTBase->strdup
-#define calloc hwcl->CRTBase->calloc
-#define malloc hwcl->CRTBase->malloc
-#define free hwcl->CRTBase->free
-#define realloc hwcl->CRTBase->realloc
-#define vsnprintf hwcl->CRTBase->vsnprintf
-#define vsscanf hwcl->CRTBase->vsscanf
-#endif

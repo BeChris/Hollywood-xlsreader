@@ -54,10 +54,9 @@
 #include "../include/libxls/brdb.h"
 #include "../include/libxls/endian.h"
 
-#include "../include/xlsreaderplugin.h"
+#include "../include/purefuncs.h"
 
 extern int xls_debug;
-extern hwPluginAPI *hwcl;
 
 /* Not a complete list */
 enum xls_format_e {
@@ -155,14 +154,14 @@ char *utf8_decode(const char *str, DWORD len, char *encoding)
 	}
 	
 	if(utf8_chars == 0 || strcmp(encoding, "UTF-8")) {
-		ret = malloc(len+1);
+		ret = pure_malloc(len+1);
 		memcpy(ret, str, len);
 		ret[len] = 0;
 	} else {
         DWORD i;
         char *out;
 		// UTF-8 encoding inline
-		ret = malloc(len+utf8_chars+1);
+		ret = pure_malloc(len+utf8_chars+1);
 		out = ret;
 		for(i=0; i<len; ++i) {
 			BYTE c = str[i];
@@ -186,18 +185,14 @@ char* unicode_decode(const char *s, size_t len, size_t *newlen, const char* to_e
     char *converted = NULL;
     int count;
     int idx;
-    if (setlocale(0, "") == NULL) {
-        return NULL;
-    }
 
     if (validate(s) == FALSE) {
-        printf("Not validated !\n");
         return NULL;
     }
 
     count = (len * 2) + 1;
 
-    converted = calloc(count * 5, sizeof(char));
+    converted = pure_calloc(count * 5, sizeof(char));
     memset(converted, 0, 5 * sizeof(char));
 
     idx = 0;
@@ -205,10 +200,10 @@ char* unicode_decode(const char *s, size_t len, size_t *newlen, const char* to_e
         int ch = getnextchar(s, &idx);
         char temp[5] = {'\0'};
         composechar(temp, ch);
-        strcat(converted, temp);
+        pure_strcat(converted, temp);
     }
 
-    if (newlen) *newlen = strlen(converted);
+    if (newlen) *newlen = pure_strlen(converted);
     return converted;
 }
 
@@ -323,50 +318,6 @@ void xls_showXF(XF8* xf)
 {
 }
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#define snprintf c99_snprintf
-#define vsnprintf c99_vsnprintf
-
-__inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
-{
-    int count = -1;
-
-    if (size != 0)
-        count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
-    if (count == -1)
-        count = _vscprintf(format, ap);
-
-    return count;
-}
-
-__inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
-{
-    int count;
-    va_list ap;
-
-    va_start(ap, format);
-    count = c99_vsnprintf(outBuf, size, format, ap);
-    va_end(ap);
-
-    return count;
-}
-
-#endif
-
-#ifdef HW_AMIGA
-int snprintf(char *buffer, size_t size, const char *format, ...)
-{
-    int ret;
-    va_list args;
-
-    va_start(args, format);
-    ret = vsnprintf(buffer, size, format, args);
-    va_end(args);
-    return ret;
-}
-#endif
-
 char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
 {
     struct st_xf_data *xf = NULL;
@@ -387,18 +338,18 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
             offset += ((DWORD)label[3] << 24);
         }
         if(offset < pWB->sst.count && pWB->sst.string[offset].str) {
-            ret = strdup(pWB->sst.string[offset].str);
+            ret = pure_strdup(pWB->sst.string[offset].str);
         }
         break;
     case XLS_RECORD_BLANK:
     case XLS_RECORD_MULBLANK:
-        ret = strdup("");
+        ret = pure_strdup("");
         break;
     case XLS_RECORD_LABEL:
         len = label[0] + (label[1] << 8);
         label += 2;
 		if(pWB->is5ver) {
-            ret = malloc(len+1);
+            ret = pure_malloc(len+1);
             memcpy(ret, label, len);
             ret[len] = 0;
 		} else {
@@ -411,39 +362,39 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
         break;
     case XLS_RECORD_RK:
     case XLS_RECORD_NUMBER:
-        ret = malloc(retlen);
-        snprintf(ret, retlen, "%lf", cell->d);
+        ret = pure_malloc(retlen);
+        pure_snprintf(ret, retlen, "%lf", cell->d);
 		break;
 		//		if( RK || MULRK || NUMBER || FORMULA)
 		//		if (cell->id==0x27e || cell->id==0x0BD || cell->id==0x203 || 6 (formula))
     default:
         if (xf) {
-            ret = malloc(retlen);
+            ret = pure_malloc(retlen);
             switch (xf->format)
             {
                 case XLS_FORMAT_GENERAL:
                 case XLS_FORMAT_NUMBER1:
                 case XLS_FORMAT_NUMBER3:
-                    snprintf(ret, retlen, "%.0lf", cell->d);
+                    pure_snprintf(ret, retlen, "%.0lf", cell->d);
                     break;
                 case XLS_FORMAT_NUMBER2:
                 case XLS_FORMAT_NUMBER4:
-                    snprintf(ret, retlen, "%.2f", cell->d);
+                    pure_snprintf(ret, retlen, "%.2f", cell->d);
                     break;
                 case XLS_FORMAT_PERCENT1:
-                    snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
+                    pure_snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
                     break;
                 case XLS_FORMAT_PERCENT2:
-                    snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
+                    pure_snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
                     break;
                 case XLS_FORMAT_SCIENTIFIC1:
-                    snprintf(ret, retlen, "%.2e", cell->d);
+                    pure_snprintf(ret, retlen, "%.2e", cell->d);
                     break;
                 case XLS_FORMAT_SCIENTIFIC2:
-                    snprintf(ret, retlen, "%.1e", cell->d);
+                    pure_snprintf(ret, retlen, "%.1e", cell->d);
                     break;
                 default:
-                    snprintf(ret, retlen, "%.2f", cell->d);
+                    pure_snprintf(ret, retlen, "%.2f", cell->d);
                     break;
             }
             break;
@@ -472,8 +423,8 @@ char* xls_getCSS(xlsWorkBook* pWB)
     DWORD background;
     DWORD i;
 
-    char *ret = malloc(65535);
-    char *buf = malloc(4096);
+    char *ret = pure_malloc(65535);
+    char *buf = pure_malloc(4096);
 	ret[0] = '\0';
 
     for (i=0;i<pWB->xfs.count;i++)
@@ -587,10 +538,10 @@ char* xls_getCSS(xlsWorkBook* pWB)
         sprintf(buf,".xf%i{ font-size:%ipt;font-family: \"%s\";background:#%.6X;text-align:%s;vertical-align:%s;%s%s%s%s%s%s%s%s}\n",
                 i,size,fontname,background,align,valign,borderleft,borderright,bordertop,borderbottom,color,italic,bold,underline);
 
-		strcat(ret,buf);
+		pure_strcat(ret,buf);
     }
-	ret = realloc(ret, strlen(ret)+1);
-	free(buf);
+	ret = pure_realloc(ret, pure_strlen(ret)+1);
+	pure_free(buf);
 
     return ret;
 }

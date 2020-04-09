@@ -5,19 +5,22 @@ PROJECT = xlsreader.hwp
 BASE		= build/mos
 
 C_COMPILER      = ppc-morphos-gcc
-C_COMPILER_OPTS = -c -DHW_AMIGA -DHW_MORPHOS -O2 -Wall -Wno-pointer-sign -I../../include -Iinclude
+C_COMPILER_OPTS = -c -DHW_AMIGA -DHW_MORPHOS -O2 -Wall -Wno-pointer-sign -noixemul -I../../include -Iinclude -MMD -MP
 
 LINKER		= ppc-morphos-gcc
-LINKER_OPTS	= 
+LINKER_OPTS	= -nostartfiles -noixemul
 LINKER_LIBS	= -lc -lmath
 
 OBJECTS         = \
 $(BASE)/amigaentry.o \
 $(BASE)/endian.o \
 $(BASE)/ole.o \
+$(BASE)/purefuncs.o \
 $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
+
+DEPS := $(OBJECTS:.o=.d)
 
 all: $(BASE) $(PROJECT)
 
@@ -38,7 +41,9 @@ clean:
 $(BASE)/amigaentry.o: src/amigaentry.c
 $(BASE)/endian.o: src/endian.c
 $(BASE)/ole.o: src/ole.c
+$(BASE)/purefuncs.o: src/purefuncs.c
 $(BASE)/xls.o: src/xls.c
 $(BASE)/plugin.o: src/xlsreaderplugin.c
 $(BASE)/xlstool.o: src/xlstool.c
 
+-include $(DEPS)
