@@ -29,6 +29,7 @@
 
 #include "xlsreaderplugin.h"
 #include "version.h"
+#include "purefuncs.h"
 
 #include "xls.h"
 
@@ -199,10 +200,10 @@ static SAVEDS int hw_OpenXls(lua_State *L)
 						{
 							lua_pushnumber(L, cell->d);
 						} else {
-							if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
+							if (!pure_strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
 							{
 								lua_pushstring(L, (int) cell->d ? "true" : "false");
-							} else if (!strcmp((char *)cell->str, "error")) // formula is in error
+							} else if (!pure_strcmp((char *)cell->str, "error")) // formula is in error
 							{
 								lua_pushstring(L, "*error*");
 							} else // ... cell->str is valid as the result of a string formula.

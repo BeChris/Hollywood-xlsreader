@@ -98,3 +98,25 @@ qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -
 
 Then, after system is installed, to boot on emulated harddrive:
 qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -prom-env "boot-device=hd:,\boot.img" -bios /opt/ppc-morphos-emulator/openbios-qemu.elf -hda /opt/ppc-morphos-emulator/mos.raw -hdb /opt/ppc-morphos-emulator/data.raw -serial stdio -net none -netdev user,id=network01 -device sungem,netdev=network01 -ctrl-grab -sdl
+
+
+AmigaOS 4.1 (ppc):
+=================
+Generate a cross compilation toolchain using https://github.com/sba1/adtools
+
+To generate the cross toolchain (located in /opt/ppc-amigaos):
+git clone https://github.com/sba1/adtools.git
+cd adtools
+git submodule init
+git submodule update
+bin/gild checkout binutils 2.23.2
+bin/gild checkout coreutils 5.2
+bin/gild checkout gcc 8 (this step can be !!! VERY LONG !!!)
+  Note:As gcc 8 as been tagged on March, 4th to speed up the "bin/gild checkout gcc 8" step above:
+    Edit gild/bin/gild-clone and modify:
+    call(['git', 'clone', repo, 'repo'])
+    into:
+    call(['git', 'clone', '--shallow-since', '2020-03-03', repo, 'repo'])
+
+Final command (adapt -j value to amount of CPU available in your computer):
+make -C native-build gcc-cross -j4 CROSS_PREFIX=/opt/ppc-amigaos

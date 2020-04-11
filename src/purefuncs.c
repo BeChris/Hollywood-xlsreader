@@ -50,6 +50,14 @@ void pure_free(void *ptr)
 	hwcl->CRTBase->free(ptr);
 }
 
+ldiv_t pure_ldiv (long int numer, long int denom)
+{
+	ldiv_t result;
+	result.quot = numer / denom;
+	result.rem = numer % denom;
+	return result;
+}
+
 char *pure_strdup(const char *str)
 {
 	return hwcl->CRTBase->strdup(str);
@@ -140,6 +148,51 @@ char *pure_strcat(char *dst, const char *src)
 	return bak;
 }
 
+int pure_strcmp(const char *s1, const char *s2)
+{
+	int res = 0;
+
+	while(*s1 && *s2)
+	{
+		if (*s1 != *s2)
+		{
+			res = 1;
+			break;
+		}
+
+		s1++;
+		s2++;
+	}
+
+	if (*s1 == *s2)
+	{
+		res = 0;
+	}
+	else
+	{
+		res = 1;
+	}
+	
+	return res;
+
+}
+
+char *pure_strcpy(char *dst, const char *src)
+{
+	char *bak = dst;
+
+	while(*src)
+	{
+		*dst = *src;
+		dst++;
+		src++;
+	} 
+		
+	*dst = 0;
+	
+	return bak;
+}
+
 size_t pure_strlen(const char *src)
 {
 	int len = 0;
@@ -155,25 +208,6 @@ int pure_gettimeofday(void *tv, void *rest)
 {
 	return hwcl->CRTBase->gettimeofday(tv, rest);
 }
-#endif
-
-#if defined(HW_AMIGAOS3) || defined(HW_WARPOS) || defined(HW_AROS) || defined(HW_WIN32)
-
-long int pure_lrint(double x)
-{
-	return hwcl->CRTBase->lrint(x);
-}
-
-long pure_lrintf(float x)
-{
-	return pure_lrint(x);
-}
-
-double pure_rint(double x)
-{
-	return pure_lrint(x);
-}
-
 #endif
 
 #if defined(HW_AMIGAOS3) || defined(HW_WARPOS) || defined(HW_WIN32)

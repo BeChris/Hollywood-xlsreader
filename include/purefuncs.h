@@ -10,8 +10,11 @@ void *pure_malloc(size_t size);
 void *pure_realloc(void *memblock, size_t size);
 void *pure_calloc(size_t num, size_t size);
 void pure_free(void *ptr);
+ldiv_t pure_ldiv (long int numer, long int denom);
 size_t pure_strlen(const char *src);
 char *pure_strcat(char *dst, const char *src);
+int pure_strcmp(const char *s1, const char *s2);
+char *pure_strcpy(char *dst, const char *src);
 char *pure_strdup(const char *str);
 FILE *pure_fopen(char *filename, char *modes);
 int pure_fclose(FILE *stream);
@@ -43,6 +46,7 @@ int pure_toupper(int c);
 
 #define pure_malloc malloc
 #define pure_free free
+#define pure_ldiv ldiv
 #define pure_realloc realloc
 #define pure_calloc calloc
 #define pure_fopen fopen
@@ -53,6 +57,8 @@ int pure_toupper(int c);
 #define pure_fwrite fwrite
 #define pure_strlen strlen
 #define pure_strcat strcat
+#define pure_strcmp strcmp
+#define pure_strcpy strcpy
 #define pure_strtod strtod
 #define pure_strtol strtol
 #define pure_sscanf sscanf
@@ -73,26 +79,9 @@ char *mystrdup(const char *s1);
 
 int pure_gettimeofday(void *tv, void *restrict);
 
-#ifndef HOLLYWOOD_PLATFORM_H
-APTR hwos_Open(STRPTR name, int mode);
-int hwos_Close(APTR fh);
-ULONG hwos_Seek(APTR fh, ULONG pos, int mode);
-int hwos_FRead(APTR fh, APTR block, ULONG blocklen);
-int hwos_LoadImage(STRPTR filename, ULONG **retrgb, int *retwidth, int *retheight);
-void hwos_TmpNam(STRPTR buf);
-int hwos_DeleteFile(STRPTR file);
-void hwos_GetCurrentDir(STRPTR buf, int len);
-int hwos_AddPart(STRPTR dirname, STRPTR filename, int size);
-STRPTR hwos_FindTTFFont(STRPTR name, int weight, int slant, int fileonly, int *retoffset, int *retlen, int *rettmp);
-#endif
-
-int hwos_isstreaming(APTR fh);
-
 long int pure_lrint(double x);
 long pure_lrintf(float x);
 double pure_rint(double x);
-
-void debugstring(const char *s);
 
 int validate(const char *s);
 int getnextchar(const char *s, int *idx);

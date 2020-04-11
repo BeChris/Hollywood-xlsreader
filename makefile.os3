@@ -5,16 +5,17 @@ PROJECT = xlsreader.hwp
 BASE		= build/os3
 
 C_COMPILER      = vc
-C_COMPILER_OPTS = -v -c -c99 -O -cpu=68020 -DHW_AMIGA -DHW_AMIGAOS3 -I../../include -Iinclude
+C_COMPILER_OPTS = -c -c99 -O -cpu=68020 -DHW_AMIGA -DHW_AMIGAOS3 -I../../include -Iinclude
 
 LINKER		= vc
-LINKER_OPTS     = -v
+LINKER_OPTS     = -nostdlib
 LINKER_LIBS	= -lmieee -lvc
 
 OBJECTS         = \
 $(BASE)/amigaentry.o \
 $(BASE)/endian.o \
 $(BASE)/ole.o \
+$(BASE)/purefuncs.o \
 $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
@@ -37,6 +38,7 @@ clean:
 $(BASE)/amigaentry.o: src/amigaentry.c
 $(BASE)/endian.o: src/endian.c
 $(BASE)/ole.o: src/ole.c
+$(BASE)/purefuncs.o: src/purefuncs.c
 $(BASE)/xls.o: src/xls.c
 $(BASE)/plugin.o: src/xlsreaderplugin.c
 $(BASE)/xlstool.o: src/xlstool.c

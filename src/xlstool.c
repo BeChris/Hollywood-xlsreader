@@ -153,7 +153,7 @@ char *utf8_decode(const char *str, DWORD len, char *encoding)
 		}
 	}
 	
-	if(utf8_chars == 0 || strcmp(encoding, "UTF-8")) {
+	if(utf8_chars == 0 || pure_strcmp(encoding, "UTF-8")) {
 		ret = pure_malloc(len+1);
 		memcpy(ret, str, len);
 		ret[len] = 0;

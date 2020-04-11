@@ -540,8 +540,8 @@ static struct st_cell_data *xls_addCell(xlsWorkSheet* pWS,BOF* bof,BYTE* buf)
     case XLS_RECORD_LABEL:
         xls_cell_set_str(cell, xls_getfcell(pWS->workbook, cell, ((LABEL*)buf)->value));
         if (cell->str) {
-            sscanf((char *)cell->str, "%d", &cell->l);
-            sscanf((char *)cell->str, "%lf", &cell->d);
+            pure_sscanf((char *)cell->str, "%d", &cell->l);
+            pure_sscanf((char *)cell->str, "%lf", &cell->d);
         }
 		break;
     case XLS_RECORD_RK:
@@ -1250,7 +1250,7 @@ static xlsWorkBook *xls_open_ole(OLE2 *ole, const char *charset, xls_error_t *ou
     pWB->fonts.count=0;
     if (charset) {
         pWB->charset = pure_malloc(strlen(charset) * sizeof(char)+1);
-        strcpy(pWB->charset, charset);
+        pure_strcpy(pWB->charset, charset);
     } else {
         pWB->charset = pure_strdup("UTF-8");
     }

@@ -8,6 +8,7 @@
 #include <proto/exec.h>
 
 #include "version.h"
+#include "purefuncs.h"
 
 #include <hollywood/plugin.h>
 
@@ -61,7 +62,7 @@ HW_EXPORT void *GetProcAddress(STRPTR name)
 	int k;
 
 	for(k = 0; funcs[k].name; k++) {
-		if(!strcmp(name, funcs[k].name)) return funcs[k].func;
+		if(!pure_strcmp(name, funcs[k].name)) return funcs[k].func;
 	}
 
 	return NULL;

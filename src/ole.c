@@ -250,7 +250,7 @@ cleanup:
 int ole2_seek(OLE2Stream* olest,DWORD ofs)
 {
 	if(olest->sfat) {
-		ldiv_t div_rez=ldiv(ofs,olest->ole->lssector);
+		ldiv_t div_rez=pure_ldiv(ofs,olest->ole->lssector);
 		int i;
 		olest->fatpos=olest->start;
 
@@ -270,7 +270,7 @@ int ole2_seek(OLE2Stream* olest,DWORD ofs)
         olest->eof=0;
         olest->cfat=div_rez.quot;
 	} else {
-		ldiv_t div_rez=ldiv(ofs,olest->ole->lsector);
+		ldiv_t div_rez=pure_ldiv(ofs,olest->ole->lsector);
 		int i;
 		olest->fatpos=olest->start;
 
@@ -301,7 +301,7 @@ OLE2Stream*  ole2_fopen(OLE2* ole, const char *file)
 
     for (i=0;i<ole->files.count;i++) {
 		char *str = ole->files.file[i].name;
-        if (str && strcmp(str,file)==0)	// newer versions of Excel don't write the "Root Entry" string for the first set of data
+        if (str && pure_strcmp(str,file)==0)	// newer versions of Excel don't write the "Root Entry" string for the first set of data
         {
             return ole2_sopen(ole,ole->files.file[i].start,ole->files.file[i].size);
         }
