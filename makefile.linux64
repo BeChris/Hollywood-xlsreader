@@ -5,7 +5,7 @@ PROJECT = xlsreader.hwp
 BASE		= build/linux64
 
 C_COMPILER      = gcc
-C_COMPILER_OPTS = -c -fPIC -DHW_LINUX -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -I../../include -Iinclude
+C_COMPILER_OPTS = -c -fPIC -DHW_LINUX -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -I../../include -Iinclude -MMD -MP
 
 LINKER		= gcc
 LINKER_OPTS	= -shared -fPIC -Wl,--version-script=plugin_linux.def -Wl,-soname,$(PROJECT)
@@ -18,6 +18,8 @@ $(BASE)/purefuncs.o \
 $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
+
+DEPS := $(OBJECTS:.o=.d)
 
 all: $(BASE) $(PROJECT)
 
@@ -42,3 +44,5 @@ $(BASE)/purefuncs.o: src/purefuncs.c
 $(BASE)/xls.o: src/xls.c
 $(BASE)/plugin.o: src/xlsreaderplugin.c
 $(BASE)/xlstool.o: src/xlstool.c
+
+-include $(DEPS)
