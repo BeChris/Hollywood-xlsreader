@@ -6,11 +6,6 @@
 
 #ifdef HW_AMIGA
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 void *pure_malloc(size_t size);
 void *pure_realloc(void *memblock, size_t size);
 void *pure_calloc(size_t num, size_t size);
@@ -36,11 +31,15 @@ long pure_strtol(const char *str, char **tail, int base);
 int pure_gettimeofday(void *tv, void *restrict);
 int pure_toupper(int c);
 
-#ifdef __cplusplus
-}
-#endif
-
 #else
+
+#if defined(_MSC_VER)
+#define pure_snprintf _snprintf
+#define pure_vsnprintf _vsnprintf
+#else
+#define pure_snprintf snprintf
+#define pure_vsnprintf vsnprintf
+#endif
 
 #define pure_malloc malloc
 #define pure_free free
@@ -59,46 +58,6 @@ int pure_toupper(int c);
 #define pure_sscanf sscanf
 #define pure_toupper toupper
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#define snprintf c99_snprintf
-#define vsnprintf c99_vsnprintf
-
-__inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
-{
-    int count = -1;
-
-    if (size != 0)
-        count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
-    if (count == -1)
-        count = _vscprintf(format, ap);
-
-    return count;
-}
-
-__inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
-{
-    int count;
-    va_list ap;
-
-    va_start(ap, format);
-    count = c99_vsnprintf(outBuf, size, format, ap);
-    va_end(ap);
-
-    return count;
-}
-
-#endif
-
-#ifdef __VBCC__
-#define pure_snprintf snprintf
-#define pure_vsnprintf vsnprintf
-#elif defined(_MSC_VER)
-#define pure_snprintf _snprintf
-#define pure_vsnprintf _vsnprintf
-#else
-#define pure_snprintf snprintf
-#define pure_vsnprintf vsnprintf
 #endif
 
 #define pure_printf printf
@@ -106,15 +65,13 @@ __inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
 #ifdef __VBCC__
 void pure_qsort(void *array, size_t num, size_t size, int (*cmpfunc)(const void *arg1, const void *arg2));
 char *mystrdup(const char *s1);
-#define pure_strdup(str) mystrdup(str);
+#define pure_strdup(str) mystrdup(str)
 #else
 #define pure_qsort qsort
 #define pure_strdup(str) strdup(str)
 #endif
 
 int pure_gettimeofday(void *tv, void *restrict);
-
-#endif
 
 #ifndef HOLLYWOOD_PLATFORM_H
 APTR hwos_Open(STRPTR name, int mode);

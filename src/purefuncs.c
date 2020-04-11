@@ -29,6 +29,7 @@ void composechar(char *s, int ch)
 	hwcl->UnicodeBase->composechar(s, ch);
 }
 
+#ifdef HW_AMIGA
 void *pure_malloc(size_t size)
 {
 	return hwcl->CRTBase->malloc(size);
@@ -49,28 +50,9 @@ void pure_free(void *ptr)
 	hwcl->CRTBase->free(ptr);
 }
 
-#ifndef HW_LINUX
 char *pure_strdup(const char *str)
 {
 	return hwcl->CRTBase->strdup(str);
-}
-#endif
-
-int pure_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
-{
-	return hwcl->CRTBase->vsnprintf(buffer, count, format, argptr);
-}
-
-int pure_snprintf(char *buffer, size_t count, const char *format, ...)
-{
-	va_list args;
-	int r;
-
-	va_start(args, format);
-	r = pure_vsnprintf(buffer, count, format, args);
-	va_end(args);
-
-	return r;
 }
 
 int pure_printf(const char *format, ...)
@@ -94,6 +76,23 @@ int pure_sscanf(const char *str, const char *ctrl, ...)
 
 	va_start(args, ctrl);
 	r = hwcl->CRTBase->vsscanf(str, ctrl, args);
+	va_end(args);
+
+	return r;
+}
+
+int pure_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr)
+{
+	return hwcl->CRTBase->vsnprintf(buffer, count, format, argptr);
+}
+
+int pure_snprintf(char *buffer, size_t count, const char *format, ...)
+{
+	va_list args;
+	int r;
+
+	va_start(args, format);
+	r = pure_vsnprintf(buffer, count, format, args);
 	va_end(args);
 
 	return r;
@@ -156,21 +155,7 @@ int pure_gettimeofday(void *tv, void *rest)
 {
 	return hwcl->CRTBase->gettimeofday(tv, rest);
 }
-
-int hwos_Close(APTR fh)
-{
-	return hwcl->DOSBase->hw_FClose(fh);
-}
-
-ULONG hwos_Seek(APTR fh, ULONG pos, int mode)
-{
-	return hwcl->DOSBase->hw_FSeek(fh, pos, mode);
-}
-
-int hwos_FRead(APTR fh, APTR block, ULONG blocklen)
-{
-	return hwcl->DOSBase->hw_FRead(fh, block, blocklen);
-}
+#endif
 
 #if defined(HW_AMIGAOS3) || defined(HW_WARPOS) || defined(HW_AROS) || defined(HW_WIN32)
 

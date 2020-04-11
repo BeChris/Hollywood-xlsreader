@@ -14,6 +14,7 @@ LINKER_LIBS	=
 OBJECTS         = \
 $(BASE)/endian.o \
 $(BASE)/ole.o \
+$(BASE)/purefuncs.o \
 $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
@@ -37,6 +38,7 @@ clean:
 	
 $(BASE)/endian.o: src/endian.c
 $(BASE)/ole.o: src/ole.c
+$(BASE)/purefuncs.o: src/purefuncs.c
 $(BASE)/xls.o: src/xls.c
 $(BASE)/plugin.o: src/xlsreaderplugin.c
 $(BASE)/xlstool.o: src/xlstool.c
