@@ -26,6 +26,13 @@ This plugin exposes one new function to Hollywood scripts : xlsreader.OpenXls()
 */
 
 
+How to compile:
+==============
+1)Eventually edit build.ini
+2)Execute python genbuildfiles.py (generates all the build.* files)
+3)Execute ninja -f build.(linux|linux64|mos|...)
+
+
 Now I explain how I cross compile all plugin.hwp from a Linux Manjaro 64 bits system.
 
 For Windows 32 bits:
