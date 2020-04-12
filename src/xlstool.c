@@ -34,26 +34,18 @@
  */
 
 #include <math.h>
-#include <sys/types.h>
-#include <wchar.h>
-#include <stdio.h>
+/*#include <sys/types.h>*/
+/*#include <wchar.h>*/
 
-#ifdef HW_LINUX
-#include <iconv.h>
-
-#define ICONV_CONST
-
-static const char *from_enc = "UTF-16LE";
-
-#else
 #include <locale.h>
 #include <limits.h>
-#endif
 
 #include <stdlib.h>
 #include <errno.h>
-#include <memory.h>
+/*#include <memory.h>*/
 #include <string.h>
+
+#include <hollywood/plugin.h>
 
 //#include "xls.h"
 #include "../include/libxls/xlstypes.h"
@@ -61,6 +53,8 @@ static const char *from_enc = "UTF-16LE";
 #include "../include/libxls/xlstool.h"
 #include "../include/libxls/brdb.h"
 #include "../include/libxls/endian.h"
+
+#include "../include/purefuncs.h"
 
 extern int xls_debug;
 
@@ -145,8 +139,6 @@ static const DWORD colors[] =
 // Display string if in debug mode
 void verbose(char* str)
 {
-    if (xls_debug)
-        printf("libxls : %s\n",str);
 }
 
 char *utf8_decode(const char *str, DWORD len, char *encoding)
@@ -161,15 +153,15 @@ char *utf8_decode(const char *str, DWORD len, char *encoding)
 		}
 	}
 	
-	if(utf8_chars == 0 || strcmp(encoding, "UTF-8")) {
-		ret = malloc(len+1);
+	if(utf8_chars == 0 || pure_strcmp(encoding, "UTF-8")) {
+		ret = pure_malloc(len+1);
 		memcpy(ret, str, len);
 		ret[len] = 0;
 	} else {
         DWORD i;
         char *out;
 		// UTF-8 encoding inline
-		ret = malloc(len+utf8_chars+1);
+		ret = pure_malloc(len+utf8_chars+1);
 		out = ret;
 		for(i=0; i<len; ++i) {
 			BYTE c = str[i];
@@ -186,136 +178,33 @@ char *utf8_decode(const char *str, DWORD len, char *encoding)
 	return ret;
 }
 
-#ifdef HW_LINUX
-static char* unicode_decode_iconv(const char *s, size_t len, size_t *newlen, const char* to_enc) {
-    char* outbuf = 0;
-
-    if(s && len && from_enc && to_enc)
-    {
-        size_t outlenleft = len;
-        int outlen = len;
-        size_t inlenleft = len;
-        iconv_t ic = iconv_open(to_enc, from_enc);
-        const char* src_ptr = s;
-        char* out_ptr = 0;
-
-        if(ic == (iconv_t)-1)
-        {
-            // Something went wrong.
-            if (errno == EINVAL)
-            {
-                if (!strcmp(to_enc, "ASCII"))
-                {
-                    ic = iconv_open("UTF-8", from_enc);
-                    if(ic == (iconv_t)-1)
-                    {
-                        printf("conversion from '%s' to '%s' not available", from_enc, to_enc);
-                        return outbuf;
-                    }
-                }
-            }
-            else
-            {
-                printf ("iconv_open: error=%d", errno);
-                return outbuf;
-            }
-        }
-        size_t st; 
-        outbuf = malloc(outlen + 1);
-
-		if(outbuf)
-        {
-            out_ptr = outbuf;
-            while(inlenleft)
-            {
-                st = iconv(ic, (ICONV_CONST char **)&src_ptr, &inlenleft, (char **)&out_ptr,(size_t *) &outlenleft);
-                if(st == (size_t)(-1))
-                {
-                    if(errno == E2BIG)
-                    {
-                        size_t diff = out_ptr - outbuf;
-                        outlen += inlenleft;
-                        outlenleft += inlenleft;
-                        outbuf = realloc(outbuf, outlen + 1);
-                        if(!outbuf)
-                        {
-                            break;
-                        }
-                        out_ptr = outbuf + diff;
-                    }
-                    else
-                    {
-                        free(outbuf), outbuf = NULL;
-                        break;
-                    }
-                }
-            }
-        }
-        iconv_close(ic);
-        outlen -= outlenleft;
-
-        if (newlen)
-        {
-            *newlen = outbuf ? outlen : 0;
-        }
-        if(outbuf)
-        {
-            outbuf[outlen] = 0;
-        }
-    }
-    return outbuf;
-}
-
-#else
-
-static char *unicode_decode_wcstombs(const char *s, size_t len, size_t *newlen) {
-	// Do wcstombs conversion
-    char *converted = NULL;
-    int count, count2;
-    size_t i;
-    wchar_t *w;
-    if (setlocale(LC_CTYPE, "") == NULL) {
-        printf("setlocale failed: %d\n", errno);
-        return NULL;
-    }
-
-    w = malloc((len/2+1)*sizeof(wchar_t));
-
-    for(i=0; i<len/2; i++)
-    {
-        w[i] = (BYTE)s[2*i] + ((BYTE)s[2*i+1] << 8);
-    }
-    w[len/2] = '\0';
-
-    count = wcstombs(NULL, w, INT_MAX);
-
-    if (count <= 0) {
-        if (newlen) *newlen = 0;
-        free(w);
-        return NULL;
-    }
-
-    converted = calloc(count+1, sizeof(char));
-    count2 = wcstombs(converted, w, count);
-    free(w);
-    if (count2 <= 0) {
-        printf("wcstombs failed (%lu)\n", (unsigned long)len/2);
-        if (newlen) *newlen = 0;
-        return converted;
-    }
-    if (newlen) *newlen = count2;
-    return converted;
-}
-#endif
-
 // Convert unicode string to to_enc encoding
 char* unicode_decode(const char *s, size_t len, size_t *newlen, const char* to_enc)
 {
-#ifdef HW_LINUX
-    return unicode_decode_iconv(s, len, newlen, to_enc);
-#else
-    return unicode_decode_wcstombs(s, len, newlen);
-#endif
+	// Do wcstombs conversion
+    char *converted = NULL;
+    int count;
+    int idx;
+
+    if (validate(s) == FALSE) {
+        return NULL;
+    }
+
+    count = (len * 2) + 1;
+
+    converted = pure_calloc(count * 5, sizeof(char));
+    memset(converted, 0, 5 * sizeof(char));
+
+    idx = 0;
+    while (idx < len) {
+        int ch = getnextchar(s, &idx);
+        char temp[5] = {'\0'};
+        composechar(temp, ch);
+        pure_strcat(converted, temp);
+    }
+
+    if (newlen) *newlen = pure_strlen(converted);
+    return converted;
 }
 
 // Read and decode string
@@ -373,21 +262,6 @@ char *get_string(const char *s, size_t len, BYTE is2, BYTE is5ver, char *charset
 		ret = utf8_decode(str+ofs, ln, charset);
     }
 
-#if 0	// debugging
-	if(xls_debug == 100) {
-		ofs += (flag & 0x1) ? ln*2 : ln;
-
-		printf("ofs=%d ret[0]=%d\n", ofs, *ret);
-		{
-			unsigned char *ptr;
-			
-			ptr = ret;
-			
-			printf("%x %x %x %x %x %x %x %x\n", ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
-			printf("%s\n", ret);
-		}
-	}
-#endif
 
     return ret;
 }
@@ -411,202 +285,38 @@ DWORD xls_getColor(const XLS_WORD color,XLS_WORD def)
 
 void xls_showBookInfo(xlsWorkBook* pWB)
 {
-    verbose("BookInfo");
-    printf("  is5ver: %i\n",pWB->is5ver);
-    printf("codepage: %i\n",pWB->codepage);
-    printf("    type: %.4X ",pWB->type);
-    switch (pWB->type)
-    {
-    case 0x5:
-        printf("Workbook globals\n");
-        break;
-    case 0x6:
-        printf("Visual Basic module\n");
-        break;
-    case 0x10:
-        printf("Worksheet\n");
-        break;
-    case 0x20:
-        printf("Chart\n");
-        break;
-    case 0x40:
-        printf("BIFF4 Macro sheet\n");
-        break;
-    case 0x100:
-        printf("BIFF4W Workbook globals\n");
-        break;
-    }
-    printf("------------------- END BOOK INFO---------------------------\n");
 }
 
 
 void xls_showBOF(BOF* bof)
 {
-    printf("----------------------------------------------\n");
-    verbose("BOF");
-    printf("   ID: %.4Xh %s (%s)\n",bof->id,brdb[get_brbdnum(bof->id)].name,brdb[get_brbdnum(bof->id)].desc);
-    printf("   Size: %i\n",bof->size);
 }
 
-#if 0
-static void xls_showBOUNDSHEET(BOUNDSHEET* bsheet)
-{
-    switch (bsheet->type & 0x000f)
-    {
-    case 0x0000:
-        /* worksheet or dialog sheet */
-        verbose ("85: Worksheet or dialog sheet");
-        break;
-    case 0x0001:
-        /* Microsoft Excel 4.0 macro sheet */
-        verbose ("85: Microsoft Excel 4.0 macro sheet");
-        break;
-    case 0x0002:
-        /* Chart */
-        verbose ("85: Chart sheet");
-        break;
-    case 0x0006:
-        /* Visual Basic module */
-        verbose ("85: Visual Basic sheet");
-        break;
-    default:
-        break;
-    }
-    printf("    Pos: %Xh\n",bsheet->filepos);
-    printf("  flags: %.4Xh\n",bsheet->type);
-    //	printf("   Name: [%i] %s\n",bsheet->len,bsheet->name);
-}
-#endif
 
 void xls_showROW(struct st_row_data* row)
 {
-    verbose("ROW");
-    printf("    Index: %i \n",row->index);
-    printf("First col: %i \n",row->fcell);
-    printf(" Last col: %i \n",row->lcell);
-    printf("   Height: %i (1/20 px)\n",row->height);
-    printf("    Flags: %.4X \n",row->flags);
-    printf("       xf: %i \n",row->xf);
-    printf("----------------------------------------------\n");
 }
 
 void xls_showColinfo(struct st_colinfo_data* col)
 {
-    verbose("COLINFO");
-    printf("First col: %i \n",col->first);
-    printf(" Last col: %i \n",col->last);
-    printf("    Width: %i (1/256 px)\n",col->width);
-    printf("       XF: %i \n",col->xf);
-    printf("    Flags: %i (",col->flags);
-    if (col->flags & 0x1)
-        printf("hidden ");
-    if (col->flags & 0x700)
-        printf("outline ");
-    if (col->flags & 0x1000)
-        printf("collapsed ");
-    printf(")\n");
-    printf("----------------------------------------------\n");
 }
 
 void xls_showCell(struct st_cell_data* cell)
 {
-    printf("  -----------\n");
-    printf("     ID: %.4Xh %s (%s)\n",cell->id, brdb[get_brbdnum(cell->id)].name, brdb[get_brbdnum(cell->id)].desc);
-    printf("   Cell: %c:%u  [%u:%u]\n",cell->col+'A',cell->row+1,cell->col,cell->row);
-//    printf("   Cell: %u:%u\n",cell->col+1,cell->row+1);
-    printf("     xf: %i\n",cell->xf);
-	if(cell->id == XLS_RECORD_BLANK) {
-		//printf("BLANK_CELL!\n");
-		return;
-	}
-    printf(" double: %f\n",cell->d);
-    printf("    int: %d\n",cell->l);
-    if (cell->str!=NULL)
-        printf("    str: %s\n",cell->str);
 }
 
 
 void xls_showFont(struct st_font_data* font)
 {
-
-    printf("      name: %s\n",font->name);
-    printf("    height: %i\n",font->height);
-    printf("      flag: %.4X\n",font->flag);
-    printf("     color: %.6X\n",font->color);
-    printf("      bold: %i\n",font->bold);
-    printf("escapement: %i\n",font->escapement);
-    printf(" underline: %i\n",font->underline);
-    printf("    family: %i\n",font->family);
-    printf("   charset: %i\n",font->charset);
-
 }
-#if 0
-typedef struct st_format
-	{
-		long count;		//Count of FORMAT's
-		struct st_format_data
-		{
-			XLS_WORD index;
-			char *value;
-		}
-		* format;
-	}
-	st_format;
-#endif
 
 void xls_showFormat(struct st_format_data* frmt)
 {
-	printf("    index : %u\n", frmt->index);
-    printf("     value: %s\n", frmt->value);
 }
 
 void xls_showXF(XF8* xf)
 {
-	static int idx;
-	
-    printf("      Index: %u\n",idx++);
-    printf("       Font: %u\n",xf->font);
-    printf("     Format: %u\n",xf->format);
-    printf("       Type: 0x%x\n",xf->type);
-    printf("      Align: 0x%x\n",xf->align);
-    printf("   Rotation: 0x%x\n",xf->rotation);
-    printf("      Ident: 0x%x\n",xf->ident);
-    printf("   UsedAttr: 0x%x\n",xf->usedattr);
-    printf("  LineStyle: 0x%x\n",xf->linestyle);
-    printf("  Linecolor: 0x%x\n",xf->linecolor);
-    printf("GroundColor: 0x%x\n",xf->groundcolor);
 }
-
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#define snprintf c99_snprintf
-#define vsnprintf c99_vsnprintf
-
-__inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
-{
-    int count = -1;
-
-    if (size != 0)
-        count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
-    if (count == -1)
-        count = _vscprintf(format, ap);
-
-    return count;
-}
-
-__inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
-{
-    int count;
-    va_list ap;
-
-    va_start(ap, format);
-    count = c99_vsnprintf(outBuf, size, format, ap);
-    va_end(ap);
-
-    return count;
-}
-
-#endif
 
 char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
 {
@@ -628,21 +338,20 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
             offset += ((DWORD)label[3] << 24);
         }
         if(offset < pWB->sst.count && pWB->sst.string[offset].str) {
-            ret = strdup(pWB->sst.string[offset].str);
+            ret = pure_strdup(pWB->sst.string[offset].str);
         }
         break;
     case XLS_RECORD_BLANK:
     case XLS_RECORD_MULBLANK:
-        ret = strdup("");
+        ret = pure_strdup("");
         break;
     case XLS_RECORD_LABEL:
         len = label[0] + (label[1] << 8);
         label += 2;
 		if(pWB->is5ver) {
-            ret = malloc(len+1);
+            ret = pure_malloc(len+1);
             memcpy(ret, label, len);
             ret[len] = 0;
-			//printf("Found BIFF5 string of len=%d \"%s\"\n", len, ret);
 		} else {
             if ((*(label++) & 0x01) == 0) {
                 ret = utf8_decode((char *)label, len, pWB->charset);
@@ -653,39 +362,39 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
         break;
     case XLS_RECORD_RK:
     case XLS_RECORD_NUMBER:
-        ret = malloc(retlen);
-        snprintf(ret, retlen, "%lf", cell->d);
+        ret = pure_malloc(retlen);
+        pure_snprintf(ret, retlen, "%lf", cell->d);
 		break;
 		//		if( RK || MULRK || NUMBER || FORMULA)
 		//		if (cell->id==0x27e || cell->id==0x0BD || cell->id==0x203 || 6 (formula))
     default:
         if (xf) {
-            ret = malloc(retlen);
+            ret = pure_malloc(retlen);
             switch (xf->format)
             {
                 case XLS_FORMAT_GENERAL:
                 case XLS_FORMAT_NUMBER1:
                 case XLS_FORMAT_NUMBER3:
-                    snprintf(ret, retlen, "%.0lf", cell->d);
+                    pure_snprintf(ret, retlen, "%.0lf", cell->d);
                     break;
                 case XLS_FORMAT_NUMBER2:
                 case XLS_FORMAT_NUMBER4:
-                    snprintf(ret, retlen, "%.2f", cell->d);
+                    pure_snprintf(ret, retlen, "%.2f", cell->d);
                     break;
                 case XLS_FORMAT_PERCENT1:
-                    snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
+                    pure_snprintf(ret, retlen, "%.0lf%%", 100 * cell->d);
                     break;
                 case XLS_FORMAT_PERCENT2:
-                    snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
+                    pure_snprintf(ret, retlen, "%.2lf%%", 100 * cell->d);
                     break;
                 case XLS_FORMAT_SCIENTIFIC1:
-                    snprintf(ret, retlen, "%.2e", cell->d);
+                    pure_snprintf(ret, retlen, "%.2e", cell->d);
                     break;
                 case XLS_FORMAT_SCIENTIFIC2:
-                    snprintf(ret, retlen, "%.1e", cell->d);
+                    pure_snprintf(ret, retlen, "%.1e", cell->d);
                     break;
                 default:
-                    snprintf(ret, retlen, "%.2f", cell->d);
+                    pure_snprintf(ret, retlen, "%.2f", cell->d);
                     break;
             }
             break;
@@ -695,6 +404,7 @@ char *xls_getfcell(xlsWorkBook* pWB, struct st_cell_data* cell, BYTE *label)
     return ret;
 }
 
+/*
 char* xls_getCSS(xlsWorkBook* pWB)
 {
     char color[255];
@@ -713,8 +423,8 @@ char* xls_getCSS(xlsWorkBook* pWB)
     DWORD background;
     DWORD i;
 
-    char *ret = malloc(65535);
-    char *buf = malloc(4096);
+    char *ret = pure_malloc(65535);
+    char *buf = pure_malloc(4096);
 	ret[0] = '\0';
 
     for (i=0;i<pWB->xfs.count;i++)
@@ -828,10 +538,12 @@ char* xls_getCSS(xlsWorkBook* pWB)
         sprintf(buf,".xf%i{ font-size:%ipt;font-family: \"%s\";background:#%.6X;text-align:%s;vertical-align:%s;%s%s%s%s%s%s%s%s}\n",
                 i,size,fontname,background,align,valign,borderleft,borderright,bordertop,borderbottom,color,italic,bold,underline);
 
-		strcat(ret,buf);
+		pure_strcat(ret,buf);
     }
-	ret = realloc(ret, strlen(ret)+1);
-	free(buf);
+	ret = pure_realloc(ret, pure_strlen(ret)+1);
+	pure_free(buf);
 
     return ret;
 }
+*/
+

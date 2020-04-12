@@ -23,18 +23,18 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <hollywood/plugin.h>
 
 #include "xlsreaderplugin.h"
 #include "version.h"
+#include "purefuncs.h"
 
 #include "xls.h"
 
 // pointer to the Hollywood plugin API
-static hwPluginAPI *hwcl = NULL;
+hwPluginAPI *hwcl = NULL;
 
 static hwPluginBase *hwpb = NULL;
 
@@ -76,14 +76,14 @@ HW_EXPORT int InitPlugin(hwPluginBase *self, hwPluginAPI *cl, STRPTR path)
 	self->Version = PLUGIN_VER;
 	self->Revision = PLUGIN_REV;
 
-	// we want to be compatible with Hollywood 6.0
+	// we want to be compatible with Hollywood 7.0
 	// **WARNING**: when compiling with newer SDK versions you have to be very
 	// careful which functions you call and which structure members you access
 	// because not all of them are present in earlier versions. Thus, if you
 	// target versions older than your SDK version you have to check the hollywood.h
 	// header file very carefully to check whether the older version you want to
 	// target has the respective feature or not
-	self->hwVersion = 6;
+	self->hwVersion = 7;
 	self->hwRevision = 0;
 	
 	// set plugin information; note that these string pointers need to stay
@@ -200,10 +200,10 @@ static SAVEDS int hw_OpenXls(lua_State *L)
 						{
 							lua_pushnumber(L, cell->d);
 						} else {
-							if (!strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
+							if (!pure_strcmp((char *)cell->str, "bool")) // its boolean, and test cell->d
 							{
 								lua_pushstring(L, (int) cell->d ? "true" : "false");
-							} else if (!strcmp((char *)cell->str, "error")) // formula is in error
+							} else if (!pure_strcmp((char *)cell->str, "error")) // formula is in error
 							{
 								lua_pushstring(L, "*error*");
 							} else // ... cell->str is valid as the result of a string formula.

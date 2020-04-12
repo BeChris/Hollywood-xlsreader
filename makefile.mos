@@ -1,22 +1,26 @@
-# Makefile for Mac OS i386
+# Makefile for MorphOS using gcc
 
 PROJECT = xlsreader.hwp
 
-BASE		= build/macos
+BASE		= build/mos
 
-C_COMPILER      = gcc -arch i386
-C_COMPILER_OPTS = -c -fPIC -DHW_MACOS -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -I../../include -Iinclude
+C_COMPILER      = ppc-morphos-gcc
+C_COMPILER_OPTS = -c -DHW_AMIGA -DHW_MORPHOS -O2 -Wall -Wno-pointer-sign -noixemul -I../../include -Iinclude -MMD -MP
 
-LINKER		= gcc -arch i386
-LINKER_OPTS	= -dynamiclib -fPIC -exported_symbols_list plugin_macos.def
-LINKER_LIBS	= 
+LINKER		= ppc-morphos-gcc
+LINKER_OPTS	= -nostartfiles -noixemul
+LINKER_LIBS	= -lc -lmath
 
 OBJECTS         = \
+$(BASE)/amigaentry.o \
 $(BASE)/endian.o \
 $(BASE)/ole.o \
+$(BASE)/purefuncs.o \
 $(BASE)/xls.o \
 $(BASE)/xlsreaderplugin.o \
 $(BASE)/xlstool.o
+
+DEPS := $(OBJECTS:.o=.d)
 
 all: $(BASE) $(PROJECT)
 
@@ -28,18 +32,18 @@ $(BASE):
 
 $(PROJECT): $(OBJECTS)
 	$(LINKER) $(LINKER_OPTS) -o $(BASE)/$(PROJECT) $(OBJECTS) $(LINKER_LIBS)
-	strip -x $(BASE)/$(PROJECT)
-	file $(BASE)/$(PROJECT)
+	ppc-morphos-strip --remove-section .comment $(BASE)/$(PROJECT)
 
 clean:
 	rm -f $(BASE)/*.o
 	rm -f $(BASE)/*.hwp
-	
+
+$(BASE)/amigaentry.o: src/amigaentry.c
 $(BASE)/endian.o: src/endian.c
 $(BASE)/ole.o: src/ole.c
+$(BASE)/purefuncs.o: src/purefuncs.c
 $(BASE)/xls.o: src/xls.c
 $(BASE)/plugin.o: src/xlsreaderplugin.c
 $(BASE)/xlstool.o: src/xlstool.c
 
-
-
+-include $(DEPS)

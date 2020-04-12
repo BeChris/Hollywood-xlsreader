@@ -78,7 +78,7 @@ unsigned short xlsShortVal (short s)
     }
 }
 
-void xlsConvertDouble(unsigned char *d)
+void xlsConvertDouble(BYTE *d)
 {
     unsigned char t;
     int i;

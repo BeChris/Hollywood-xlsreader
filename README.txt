@@ -26,6 +26,13 @@ This plugin exposes one new function to Hollywood scripts : xlsreader.OpenXls()
 */
 
 
+How to compile:
+==============
+1)Eventually edit build.ini
+2)Execute python genbuildfiles.py (generates all the build.* files)
+3)Execute ninja -f build.(linux|linux64|mos|...)
+
+
 Now I explain how I cross compile all plugin.hwp from a Linux Manjaro 64 bits system.
 
 For Windows 32 bits:
@@ -75,4 +82,48 @@ Cross toolchain to be installed in /opt/m68k-amigaos
 Then to compile:
 ./compile_os3.sh
 
+MorphOS (ppc):
+=============
+Generate a cross compilation toolchain using https://github.com/AmigaPorts/morphos-cross-toolchain
 
+Cross toolchain to be installed in /opt/ppc-morphos
+
+Then to compile:
+./compile_mos.sh
+
+I succeed in installing and running MorphOS under qemu following directives at : http://amigawarez.com/index.php?resources/morphos-on-qemu.297/
+Patched openbios-qemu.elf must be downloaded from http://zero.eik.bme.hu/~balaton/qemu/amiga
+Installation done under /opt/ppc-morphos-emulator
+
+Before installating the system, a 20G harddisk image must be created using command:
+qemu-img create -f raw /opt/ppc-morphos-emulator/mos.raw 20G
+
+To run the emulator on MorphOS 3.11 installation cd:
+
+Then, to install the system from cd:
+qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -prom-env "boot-device=hd:,\boot.img" -bios /opt/ppc-morphos-emulator/openbios-qemu.elf -hda /opt/ppc-morphos-emulator/mos.raw -hdb /opt/ppc-morphos-emulator/data.raw -serial stdio -net none -netdev user,id=network01 -device sungem,netdev=network01 -ctrl-grab -sdl
+
+Then, after system is installed, to boot on emulated harddrive:
+qemu-system-ppc -machine mac99,via=pmu -m 512 -vga none -device sm501  -boot d -prom-env "boot-device=hd:,\boot.img" -bios /opt/ppc-morphos-emulator/openbios-qemu.elf -hda /opt/ppc-morphos-emulator/mos.raw -hdb /opt/ppc-morphos-emulator/data.raw -serial stdio -net none -netdev user,id=network01 -device sungem,netdev=network01 -ctrl-grab -sdl
+
+
+AmigaOS 4.1 (ppc):
+=================
+Generate a cross compilation toolchain using https://github.com/sba1/adtools
+
+To generate the cross toolchain (located in /opt/ppc-amigaos):
+git clone https://github.com/sba1/adtools.git
+cd adtools
+git submodule init
+git submodule update
+bin/gild checkout binutils 2.23.2
+bin/gild checkout coreutils 5.2
+bin/gild checkout gcc 8 (this step can be !!! VERY LONG !!!)
+  Note:As gcc 8 as been tagged on March, 4th to speed up the "bin/gild checkout gcc 8" step above:
+    Edit gild/bin/gild-clone and modify:
+    call(['git', 'clone', repo, 'repo'])
+    into:
+    call(['git', 'clone', '--shallow-since', '2020-03-03', repo, 'repo'])
+
+Final command (adapt -j value to amount of CPU available in your computer):
+make -C native-build gcc-cross -j4 CROSS_PREFIX=/opt/ppc-amigaos
