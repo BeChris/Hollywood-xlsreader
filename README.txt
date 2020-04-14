@@ -30,8 +30,8 @@ How to compile:
 ==============
 1)Eventually edit build.ini
 2)Execute python genbuildfiles.py (generates all the build.* files)
-3)Execute ninja -f build.(linux|linux64|mos|...)
-(Ninja homepage : https://ninja-build.org/)
+3)Execute one of ./compile_(linux|linux64|mos|...).sh of ./compile_all.sh (invoke all compile_*.sh)
+(It uses Ninja build tool instead of Make : https://ninja-build.org/)
 
 
 Now I explain how I cross compile all plugin.hwp from a Linux Manjaro 64 bits system.
@@ -50,6 +50,23 @@ make
 cd bin/linux-x86_64/tools/crosstools
 mkdir /opt/i386-aros/bin
 cp -r * /opt/i386-aros/bin/
+
+
+For Linux ppc (raspberry):
+=========================
+According to http://tvaira.free.fr/projets/activites/activite-raspberry-pi-cross-compilation.pdf:
+Download raspi cross toolchain for Linux at : https://s3.amazonaws.com/RTI/Community/ports/toolchains/raspbian-toolchain-gcc-4.7.2-linux64.tar.gz
+And uncompress it to /opt/ppc-raspbian
+
+
+Now the emulator under qemu:
+1)Download "Raspbian Buster Lite" at https://www.raspberrypi.org/downloads/raspbian/ : you shall get a 2020-02-13-raspbian-buster-lite.zip file
+2)mkdir -p /opt/ppc-raspbian-emulator
+3)cd /opt/ppc-raspbian-emulator
+4)unzip 2020-02-13-raspbian-buster-lite.zip (should uncompress to 2020-02-13-raspbian-buster-lite.img)
+5)git clone https://github.com/dhruvvyas90/qemu-rpi-kernel
+6)Then, according to https://openclassrooms.com/fr/courses/5281406-creez-un-linux-embarque-pour-la-domotique/5464241-emulez-une-raspberry-pi-avec-qemu, write following command line in start_emulator.sh:
+qemu-system-arm -M versatilepb -cpu arm1176 -m 256 -hda /opt/arm-raspbian-emulator/2020-02-13-raspbian-buster-lite.img -dtb /opt/arm-raspbian-emulator/qemu-rpi-kernel/versatile-pb.dtb -kernel /opt/arm-raspbian-emulator/qemu-rpi-kernel/kernel-qemu-4.19.50-buster -append 'root=/dev/sda2 panic=1' -no-reboot -serial stdio -ctrl-grab -display none
 
 
 For Windows 32 bits:

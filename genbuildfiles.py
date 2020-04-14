@@ -20,7 +20,7 @@ LIBS    = 'libs'
 TESTS   = 'tests'
 NAME    = 'name'
 PLATFORMS = 'platforms'
-ALLOWED_PLATFORMS = ['aros', 'linux', 'linux64', 'macos', 'macos64', 'mos', 'os3', 'os3fpu', 'os4', 'win32', 'applet']
+ALLOWED_PLATFORMS = ['aros', 'linux', 'linux64', 'linuxarm', 'macos', 'macos64', 'mos', 'os3', 'os3fpu', 'os4', 'win32', 'applet']
 
 is_applet = {'applet'}
 is_amiga = {'aros', 'mos', 'os3', 'os3fpu', 'os4'}
@@ -29,6 +29,7 @@ C_COMPILER = {
     'aros': 'i386-aros-gcc',
     'linux': 'gcc',
     'linux64': 'gcc',
+    'linuxarm': 'arm-linux-gnueabihf-gcc',
     'macos': 'i386-apple-darwin17-cc',
     'macos64': 'x86_64-apple-darwin17-cc',
     'mos': 'ppc-morphos-gcc',
@@ -40,6 +41,7 @@ C_COMPILER = {
 
 SYSROOT = {
     'aros': '/opt/i386-aros',
+    'linuxarm': '/opt/arm-raspbian',
     'macos': '/opt/i386-macos',
     'macos64': '/opt/i386-macos',
     'mos': '/opt/ppc-morphos',
@@ -63,6 +65,7 @@ EXE_PLATFORM = {
     'aros': 'aros',
     'linux': 'linux',
     'linux64': 'linux64',
+    'linuxarm': 'linuxarm',
     'macos': 'macos86',
     'macos64': 'macos64',
     'mos': 'morphos',
@@ -81,6 +84,7 @@ PLUGIN_DESTDIR = {
     'aros': HOLLYWOOD + '/LinkerPlugins/x86-aros',
     'linux': HOLLYWOOD + '/LinkerPlugins/x86-linux',
     'linux64': HOLLYWOOD + '/LinkerPlugins/x64-linux',
+    'linuxarm': HOLLYWOOD + '/LinkerPlugins/arm-linux',
     'macos': HOLLYWOOD + '/LinkerPlugins/x86-macos',
     'macos64': HOLLYWOOD + '/LinkerPlugins/x64-macos',
     'mos': HOLLYWOOD + '/LinkerPlugins/ppc-morphos',
@@ -90,7 +94,7 @@ PLUGIN_DESTDIR = {
     'win32': HOLLYWOOD + '/LinkerPlugins/x86-windows-console',
 }
 
-is_gcc = {'aros', 'linux', 'linux64', 'macos', 'macos64', 'mos', 'os4'}
+is_gcc = {'aros', 'linux', 'linux64', 'linuxarm', 'macos', 'macos64', 'mos', 'os4'}
 is_msvc = {'win32'}
 is_vbcc = {'os3', 'os3fpu'}
 
@@ -98,6 +102,7 @@ C_COMPILER_OPTS = {
     'aros': '-c -DHW_AMIGA -DHW_AROS -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
     'linux': '-c -m32 -fPIC -DHW_LINUX -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
     'linux64': '-c -fPIC -DHW_LINUX -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
+    'linuxarm': '-c -fPIC -DHW_LINUX -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
     'macos': '-c -fPIC -DHW_MACOS -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
     'macos64': '-c -fPIC -DHW_MACOS -DHW_LITTLE_ENDIAN -O2 -Wall -Wno-pointer-sign -MMD -MP',
     'mos': '-c -DHW_AMIGA -DHW_MORPHOS -O2 -Wall -Wno-pointer-sign -noixemul -MMD -MP',
@@ -114,6 +119,7 @@ LINKER_OPTS = {
     'aros': '-nostartfiles',
     'linux': '-m32 -shared -fPIC -Wl,--version-script=plugin_linux.def -Wl,-soname,$PROJECT',
     'linux64': '-shared -fPIC -Wl,--version-script=plugin_linux.def -Wl,-soname,$PROJECT',
+    'linuxarm': '-shared -fPIC -Wl,--version-script=plugin_linux.def -Wl,-soname,$PROJECT',
     'macos': '-dynamiclib -fPIC -exported_symbols_list plugin_macos.def',
     'macos64': '-dynamiclib -fPIC -exported_symbols_list plugin_macos.def',
     'mos': '-nostartfiles -noixemul',
@@ -136,6 +142,7 @@ STRIP_COMMAND = {
     'aros': 'i386-aros-strip --remove-section .comment',
     'linux': 'strip --remove-section .comment',
     'linux64': 'strip --remove-section .comment',
+    'linuxarm': 'arm-linux-gnueabihf-strip --remove-section .comment',
     'macos': 'i386-apple-darwin17-strip -x',
     'macos64': 'x86_64-apple-darwin17-strip -x',
     'mos': 'ppc-morphos-strip --remove-section .comment',
